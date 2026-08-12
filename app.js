@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "4.3.0";
+const CURRENT_APP_VERSION = "4.4.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
