@@ -1,0 +1,44 @@
+{
+  "name": "baraem-al-iman",
+  "version": "1.0.0",
+  "description": "Nursery Management System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.baraem-al-iman.app",
+    "productName": "براعم الإيمان",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "app.js",
+      "styles.css",
+      "main.js",
+      "package.json",
+      "guide-shots/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "author": "Mohamed Elhawy",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
+    "electron-winstaller": "^5.4.0"
+  }
+}
