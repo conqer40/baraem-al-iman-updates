@@ -8204,13 +8204,27 @@ function renderUpdatesSection() {
                     </div>
                     <div class="changelog-list" style="display:flex; flex-direction:column; gap:16px;">
                         
-                        <!-- Version 5.1.0 -->
-                        <div class="changelog-item" style="border:1px solid #10b981; background:rgba(16,185,129,0.06); border-radius:14px; padding:18px;">
+                        <!-- Version 5.2.0 -->
+                        <div class="changelog-item" style="border:1px solid #f43f5e; background:rgba(244,63,94,0.06); border-radius:14px; padding:18px;">
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                                <div class="changelog-badge" style="background:#065f46; color:#34d399; border-color:#059669; font-weight:800; font-size:0.9rem; padding:4px 12px;">🌟 الإصدار 5.1.0 (الحالي)</div>
+                                <div class="changelog-badge" style="background:#be123c; color:#fecdd3; border-color:#e11d48; font-weight:800; font-size:0.9rem; padding:4px 12px;">🎂 الإصدار 5.2.0 (الحالي)</div>
                                 <small style="color:#94a3b8; font-weight:700;">2026-08-13</small>
                             </div>
                             <ul style="margin:0; padding-right:20px; line-height:1.9; color:#f1f5f9; font-size:0.92rem;">
+                                <li><strong>🎂 ويدجت أعياد ميلاد الأسبوع:</strong> تنبيه تلقائي واحتفالي بالأطفال الذين يصادف عيد ميلادهم خلال الـ 7 أيام القادمة.</li>
+                                <li><strong>💬 تهنئة واتساب فورية لولي الأمر:</strong> رسالة تهنئة منسقة بمناسبة عيد ميلاد الطفل بنقرة زر واحدة.</li>
+                                <li><strong>🖨️ طباعة بطاقات تهنئة كرتونية A4:</strong> كروت وشهادات احتفال مبهجة مدمجة بصورة الطفل واسمه وعمره.</li>
+                                <li><strong>🖼️ تحميل الشهادات والكروت كصور (PNG):</strong> إمكانية استخراج وتحميل جميع الشهادات والكروت والكارنيهات كصور عالية الدقة 300DPI للمشاركة.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Version 5.1.0 -->
+                        <div class="changelog-item" style="border:1px solid #334155; border-radius:14px; padding:18px; background:rgba(15,23,42,0.6);">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                <div class="changelog-badge" style="background:#065f46; color:#34d399; border-color:#059669; font-weight:800; font-size:0.9rem; padding:4px 12px;">🌟 الإصدار 5.1.0</div>
+                                <small style="color:#94a3b8; font-weight:700;">2026-08-13</small>
+                            </div>
+                            <ul style="margin:0; padding-right:20px; line-height:1.9; color:#cbd5e1; font-size:0.92rem;">
                                 <li><strong>📸 إرفاق صورة الطفل الشخصية:</strong> رفع صورة الطفل من الكمبيوتر وضغطها تلقائياً لتناسب قواعد البيانات.</li>
                                 <li><strong>🪪 ظهور صورة الطفل في الكارنيه والملف:</strong> دمج الصورة الشخصية داخل بادج وكارنيه الطفل وبطاقة التعريف.</li>
                                 <li><strong>💬 تنشيط قوالب رسائل الواتساب الفورية:</strong> التبديل اللحظي بين القوالب وتمييز القالب المختار فوراً بنقرة واحدة.</li>
@@ -9918,7 +9932,7 @@ function printStudentBadge(childId) {
         ? `<img src="${child.photo_url}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
         : child.full_name.charAt(0);
 
-    const printWin = window.open('', '_blank', 'width=800,height=900');
+    const printWin = window.open('', '_blank', 'width=850,height=900');
     printWin.document.write(`
         <!DOCTYPE html>
         <html lang="ar" dir="rtl">
@@ -9926,8 +9940,9 @@ function printStudentBadge(childId) {
             <meta charset="UTF-8">
             <title>بطاقة تعريف طفل | ${child.full_name}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
-                body { font-family: 'Cairo', sans-serif; background:#f1f5f9; padding:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+                body { font-family: 'Cairo', sans-serif; background:#f1f5f9; padding:30px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
                 .badge-card { width: 340px; height: 520px; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid #e2e8f0; position: relative; overflow: hidden; display: flex; flex-direction: column; text-align: center; }
                 .badge-header { background: linear-gradient(135deg, #1e3a8a, #0284c7); color: #fff; padding: 20px 16px; border-bottom: 4px solid #f59e0b; }
                 .badge-header h2 { margin: 0; font-size: 1.25rem; font-weight: 900; }
@@ -9946,11 +9961,12 @@ function printStudentBadge(childId) {
             </style>
         </head>
         <body>
-            <div class="no-print" style="margin-bottom:20px; display:flex; gap:10px;">
-                <button onclick="window.print()" style="padding:10px 24px; background:#2563eb; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1rem; font-family:inherit;">🖨️ طباعة الكارنيه الآن</button>
-                <button onclick="window.close()" style="padding:10px 20px; background:#64748b; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1rem; font-family:inherit;">إغلاق</button>
+            <div class="no-print" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                <button onclick="window.print()" style="padding:10px 22px; background:#2563eb; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:0.95rem; font-family:inherit;">🖨️ طباعة الكارنيه</button>
+                <button id="btn-dl-img" onclick="downloadBadgeImage()" style="padding:10px 22px; background:#10b981; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:0.95rem; font-family:inherit;">🖼️ حفظ واستخراج كصورة (PNG)</button>
+                <button onclick="window.close()" style="padding:10px 16px; background:#64748b; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:0.95rem; font-family:inherit;">إغلاق</button>
             </div>
-            <div class="badge-card">
+            <div id="badge-target-card" class="badge-card">
                 <div class="badge-header">
                     <h2>${BRAND.name}</h2>
                     <small>بطاقة تعريف طفل | العام الدراسي 2025 / 2026</small>
@@ -9970,6 +9986,25 @@ function printStudentBadge(childId) {
                     العنوان: ${BRAND.address} · هاتف: ${BRAND.phone}
                 </div>
             </div>
+
+            <script>
+                function downloadBadgeImage() {
+                    const el = document.getElementById('badge-target-card');
+                    const btn = document.getElementById('btn-dl-img');
+                    if (!el) return;
+                    if (btn) btn.innerHTML = "⏳ جاري إنشاء الصورة...";
+                    html2canvas(el, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = 'كارنيه_${child.full_name.replace(/\\s+/g, '_')}.png';
+                        link.href = canvas.toDataURL('image/png', 1.0);
+                        link.click();
+                        if (btn) btn.innerHTML = "🖼️ حفظ واستخراج كصورة (PNG)";
+                    }).catch(err => {
+                        alert("حدث خطأ: " + err.message);
+                        if (btn) btn.innerHTML = "🖼️ حفظ واستخراج كصورة (PNG)";
+                    });
+                }
+            </script>
         </body>
         </html>
     `);
@@ -10054,7 +10089,7 @@ function printCertificate(childId, certType, reason) {
         academic: "شهادة تفوق وإتقان تعليمي"
     };
 
-    const printWin = window.open('', '_blank', 'width=1000,height=750');
+    const printWin = window.open('', '_blank', 'width=1000,height=800');
     printWin.document.write(`
         <!DOCTYPE html>
         <html lang="ar" dir="rtl">
@@ -10062,6 +10097,7 @@ function printCertificate(childId, certType, reason) {
             <meta charset="UTF-8">
             <title>شهادة تقدير | ${child.full_name}</title>
             <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800;900&family=Reem+Kufi:wght@700&display=swap" rel="stylesheet">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
                 @page { size: A4 landscape; margin: 0; }
                 body { font-family: 'Cairo', sans-serif; background: #fafafa; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -10078,11 +10114,12 @@ function printCertificate(childId, certType, reason) {
             </style>
         </head>
         <body>
-            <div class="no-print" style="margin-bottom:15px; display:flex; gap:10px;">
-                <button onclick="window.print()" style="padding:10px 26px; background:#ca8a04; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1.1rem; font-family:inherit;">🖨️ طباعة الشهادة الآن</button>
-                <button onclick="window.close()" style="padding:10px 20px; background:#64748b; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1.1rem; font-family:inherit;">إغلاق</button>
+            <div class="no-print" style="margin-bottom:15px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                <button onclick="window.print()" style="padding:10px 24px; background:#ca8a04; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1rem; font-family:inherit;">🖨️ طباعة الشهادة (A4)</button>
+                <button id="btn-dl-img" onclick="downloadCertImage()" style="padding:10px 24px; background:#2563eb; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1rem; font-family:inherit;">🖼️ حفظ واستخراج كصورة (PNG)</button>
+                <button onclick="window.close()" style="padding:10px 18px; background:#64748b; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1rem; font-family:inherit;">إغلاق</button>
             </div>
-            <div class="cert-container">
+            <div id="cert-target-container" class="cert-container">
                 <div class="cert-header">
                     <div>
                         <h3>${BRAND.name}</h3>
@@ -10115,6 +10152,25 @@ function printCertificate(childId, certType, reason) {
                     </div>
                 </div>
             </div>
+
+            <script>
+                function downloadCertImage() {
+                    const el = document.getElementById('cert-target-container');
+                    const btn = document.getElementById('btn-dl-img');
+                    if (!el) return;
+                    if (btn) btn.innerHTML = "⏳ جاري إنشاء الصورة...";
+                    html2canvas(el, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = 'شهادة_تقدير_${child.full_name.replace(/\\s+/g, '_')}.png';
+                        link.href = canvas.toDataURL('image/png', 1.0);
+                        link.click();
+                        if (btn) btn.innerHTML = "🖼️ حفظ واستخراج كصورة (PNG)";
+                    }).catch(err => {
+                        alert("حدث خطأ: " + err.message);
+                        if (btn) btn.innerHTML = "🖼️ حفظ واستخراج كصورة (PNG)";
+                    });
+                }
+            </script>
         </body>
         </html>
     `);
@@ -10288,7 +10344,7 @@ function printBirthdayCard(childId, turningAge) {
         ? `<img src="${child.photo_url}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
         : child.full_name.charAt(0);
 
-    const printWin = window.open('', '_blank', 'width=1050,height=750');
+    const printWin = window.open('', '_blank', 'width=1050,height=800');
     printWin.document.write(`
         <!DOCTYPE html>
         <html lang="ar" dir="rtl">
@@ -10296,8 +10352,9 @@ function printBirthdayCard(childId, turningAge) {
             <meta charset="UTF-8">
             <title>بطاقة تهنئة عيد ميلاد | ${child.full_name}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
             <style>
-                body { font-family: 'Cairo', sans-serif; background: #fff5f7; margin: 0; padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
+                body { font-family: 'Cairo', sans-serif; background: #fff5f7; margin: 0; padding: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
                 .card-container { width: 900px; height: 580px; background: linear-gradient(135deg, #ffffff, #fff1f2); border: 8px double #f43f5e; border-radius: 30px; padding: 30px 40px; box-shadow: 0 15px 35px rgba(244,63,94,0.2); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; text-align: center; }
                 .corner-decor { position: absolute; font-size: 2.5rem; }
                 .top-left { top: 15px; left: 20px; }
@@ -10315,12 +10372,13 @@ function printBirthdayCard(childId, turningAge) {
             </style>
         </head>
         <body>
-            <div class="no-print" style="margin-bottom: 20px; display: flex; gap: 12px;">
-                <button onclick="window.print()" style="padding: 10px 28px; background: #e11d48; color: #fff; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 1.05rem; font-family: inherit;">🖨️ طباعة بطاقة التهنئة الآن</button>
-                <button onclick="window.close()" style="padding: 10px 20px; background: #64748b; color: #fff; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 1.05rem; font-family: inherit;">إغلاق</button>
+            <div class="no-print" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                <button onclick="window.print()" style="padding: 10px 24px; background: #e11d48; color: #fff; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-family: inherit;">🖨️ طباعة بطاقة التهنئة (A4)</button>
+                <button id="btn-dl-img" onclick="downloadBdayImage()" style="padding: 10px 24px; background: #2563eb; color: #fff; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-family: inherit;">🖼️ حفظ واستخراج كصورة (PNG)</button>
+                <button onclick="window.close()" style="padding: 10px 18px; background: #64748b; color: #fff; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-family: inherit;">إغلاق</button>
             </div>
             
-            <div class="card-container">
+            <div id="bday-target-container" class="card-container">
                 <span class="corner-decor top-left">🎈</span>
                 <span class="corner-decor top-right">🎂</span>
                 <span class="corner-decor bottom-left">🎁</span>
@@ -10351,6 +10409,25 @@ function printBirthdayCard(childId, turningAge) {
                     <div>إدارة الأكاديمية: .................... ✍️</div>
                 </div>
             </div>
+
+            <script>
+                function downloadBdayImage() {
+                    const el = document.getElementById('bday-target-container');
+                    const btn = document.getElementById('btn-dl-img');
+                    if (!el) return;
+                    if (btn) btn.innerHTML = "⏳ جاري إنشاء الصورة...";
+                    html2canvas(el, { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = 'بطاقة_تهنئة_${child.full_name.replace(/\\s+/g, '_')}.png';
+                        link.href = canvas.toDataURL('image/png', 1.0);
+                        link.click();
+                        if (btn) btn.innerHTML = "🖼️ حفظ واستخراج كصورة (PNG)";
+                    }).catch(err => {
+                        alert("حدث خطأ: " + err.message);
+                        if (btn) btn.innerHTML = "🖼️ حفظ واستخراج كصورة (PNG)";
+                    });
+                }
+            </script>
         </body>
         </html>
     `);
