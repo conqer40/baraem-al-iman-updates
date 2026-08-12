@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "4.6.0";
+const CURRENT_APP_VERSION = "5.0.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -2266,6 +2266,21 @@ function renderShell() {
                     </div>
 
                     <div class="topbar-side">
+                        <!-- GLOBAL INSTANT SEARCH -->
+                        <div class="topbar-search" style="position:relative; min-width:240px;">
+                            <div style="display:flex; align-items:center; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:0 12px; height:38px; box-shadow:var(--shadow-sm);">
+                                <span style="font-size:1rem; color:var(--ink-soft); margin-left:6px;">🔍</span>
+                                <input 
+                                    type="search" 
+                                    id="global-search-input" 
+                                    placeholder="بحث سريع (طفل، هاتف، معلمة)..." 
+                                    style="border:none; background:transparent; width:100%; outline:none; font-size:0.84rem; color:var(--ink); font-family:inherit;"
+                                    autocomplete="off"
+                                >
+                            </div>
+                            <div id="global-search-results" style="display:none; position:absolute; top:44px; right:0; left:0; min-width:320px; background:var(--paper); border:1px solid var(--line); border-radius:14px; box-shadow:0 15px 35px rgba(0,0,0,0.25); z-index:99999; max-height:360px; overflow-y:auto; padding:8px;"></div>
+                        </div>
+
                         <button class="btn btn-ghost theme-toggle-btn" type="button" data-action="toggle-theme" title="تبديل الوضع الليلي / النهاري">
                             ${document.body.classList.contains("dark-theme") ? "☀️ نهاري" : "🌙 ليلي"}
                         </button>
@@ -2894,19 +2909,57 @@ function renderChildProfile(profile) {
     const subFeeVal = profile.child.subscription_fee ? `${profile.child.subscription_fee} جنيه` : "-";
     const remBalVal = profile.child.remaining_balance !== undefined ? `${profile.child.remaining_balance} جنيه` : "-";
     const withdrawalDateVal = profile.child.withdrawal_date ? formatArabicDate(profile.child.withdrawal_date) : "-";
+    const parentPhone = getChildWhatsappPhone(profile.child.id);
 
     return `
         <div class="profile-card">
-            <div class="profile-head">
-                <div>
-                    <h3>${profile.child.full_name}</h3>
-                    <div class="subtle-text">${STAGE_LABELS[profile.child.stage]} · السن: ${ageVal}</div>
+            <div class="profile-head" style="align-items:flex-start;">
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:54px; height:54px; border-radius:16px; background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:800; box-shadow:0 6px 16px rgba(59,130,246,0.3);">
+                        ${profile.child.full_name.charAt(0)}
+                    </div>
+                    <div>
+                        <h3 style="margin:0 0 4px 0; font-size:1.25rem; font-weight:900;">${profile.child.full_name}</h3>
+                        <div class="subtle-text" style="font-weight:600;">${STAGE_LABELS[profile.child.stage] || profile.child.stage} · السن: ${ageVal}</div>
+                    </div>
                 </div>
-                <span class="tag ${profile.child.status === "ACTIVE" ? "active" : "withdrawn"}">${profile.child.status === "ACTIVE" ? "نشط" : "منسحب"}</span>
+                <span class="tag ${profile.child.status === "ACTIVE" ? "active" : "withdrawn"}" style="padding:6px 12px; font-weight:800; border-radius:10px;">${profile.child.status === "ACTIVE" ? "نشط ومقيد" : "منسحب"}</span>
             </div>
+
+            <!-- SMART ACTION BUTTONS BAR -->
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; padding:12px; background:var(--bg); border:1px solid var(--line); border-radius:14px;">
+                <button class="btn btn-whatsapp-pill" type="button" data-action="open-smart-whatsapp" data-id="${profile.child.id}" style="padding:8px 14px; font-size:0.85rem; border-radius:10px; background:#22c55e; color:#fff; border:none; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                    <span>💬</span>
+                    <span>رسائل واتساب ذكية</span>
+                </button>
+                <button class="btn btn-primary btn-sm" type="button" data-action="print-student-badge" data-id="${profile.child.id}" style="padding:8px 14px; font-size:0.85rem; border-radius:10px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                    <span>🪪</span>
+                    <span>طباعة كارنيه / بادج</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" type="button" data-action="open-certificate-modal" data-id="${profile.child.id}" style="padding:8px 14px; font-size:0.85rem; border-radius:10px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                    <span>🎓</span>
+                    <span>شهادة تقدير وتكريم</span>
+                </button>
+                <button class="btn btn-ghost btn-sm" type="button" data-action="print-child-statement" data-id="${profile.child.id}" style="padding:8px 14px; font-size:0.85rem; border-radius:10px; font-weight:700; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line);">
+                    <span>📑</span>
+                    <span>كشف حساب مالي</span>
+                </button>
+            </div>
+
+            ${profile.child.health_status && profile.child.health_status !== "لا توجد حساسية" && profile.child.health_status !== "سليم" ? `
+                <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:12px; padding:10px 14px; margin-bottom:16px; display:flex; align-items:center; gap:10px; color:#ef4444;">
+                    <span style="font-size:1.4rem;">🩺</span>
+                    <div>
+                        <strong style="display:block; font-size:0.9rem;">تنبيه صحي خاص:</strong>
+                        <span style="font-size:0.85rem;">${profile.child.health_status}</span>
+                    </div>
+                </div>
+            ` : ""}
+
             <div class="profile-meta">
                 <div><strong>السن</strong><span>${ageVal}</span></div>
-                <div><strong>الفصل</strong><span>${STAGE_LABELS[profile.child.stage]}</span></div>
+                <div><strong>الفصل</strong><span>${STAGE_LABELS[profile.child.stage] || profile.child.stage}</span></div>
+                <div><strong>هاتف ولي الأمر</strong><span>${parentPhone || "غير مسجل"}</span></div>
                 <div><strong>أول حضور</strong><span>${firstAttendanceVal}</span></div>
                 <div><strong>الاشتراك</strong><span>${subFeeVal}</span></div>
                 <div><strong>المتبقي</strong><span>${remBalVal}</span></div>
@@ -2916,7 +2969,7 @@ function renderChildProfile(profile) {
                 <div><strong>وظيفة الأب</strong><span>${profile.child.father_job || "-"}</span></div>
                 <div><strong>وظيفة الأم</strong><span>${profile.child.mother_job || "-"}</span></div>
                 <div><strong>آخر حضور</strong><span>${profile.lastAttendance ? `${ATTENDANCE_LABELS[profile.lastAttendance.status]} - ${formatArabicDate(profile.lastAttendance.attendance_date)}` : "لا يوجد"}</span></div>
-                <div><strong>الحالة الصحية</strong><span>${profile.child.health_status || "غير محددة"}</span></div>
+                <div><strong>الحالة الصحية</strong><span>${profile.child.health_status || "سليم"}</span></div>
                 <div><strong>الحضانات المتقدم لها</strong><span>${profile.child.applied_nurseries || "غير مسجلة"}</span></div>
                 <div><strong>آخر ملاحظة طبية</strong><span>${profile.lastMedical?.case_description || "لا توجد"}</span></div>
             </div>
@@ -6417,6 +6470,18 @@ function handleClick(event) {
             }
             showToast("برنامج AnyDesk متاح فقط في نسخة سطح المكتب.");
             return;
+        case "open-smart-whatsapp":
+            showSmartWhatsappModal(id);
+            return;
+        case "print-student-badge":
+            printStudentBadge(id);
+            return;
+        case "open-certificate-modal":
+            showCertificateModal(id);
+            return;
+        case "print-child-statement":
+            printChildStatement(id);
+            return;
         case "toggle-theme":
             const currentIsDark = document.body.classList.contains("dark-theme");
             const newTheme = currentIsDark ? "light" : "dark";
@@ -9411,3 +9476,506 @@ async function executeAiChatRequest() {
         render();
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SMART WHATSAPP TEMPLATES MODAL
+═══════════════════════════════════════════════════════════════════════════ */
+function showSmartWhatsappModal(childId) {
+    const child = getChildById(childId);
+    if (!child) {
+        showToast("لم يتم العثور على بيانات الطفل", "error");
+        return;
+    }
+    const parentPhone = getChildWhatsappPhone(child.id);
+    const subFee = child.subscription_fee || 0;
+    const remBal = child.remaining_balance || 0;
+    const stage = STAGE_LABELS[child.stage] || child.stage;
+
+    const templates = [
+        {
+            title: "🚌 إشعار وصول آمن للحضانة",
+            text: `السلام عليكم ورحمة الله وبركاته،\nأولياء أمورنا الكرام، نحيطكم علماً بوصول طفلكم الحبيب (${child.full_name}) إلى ${BRAND.name} بسلام اليوم بحمد الله.\nنتمنى له يوماً مفعماً بالنشاط والتعلم النافع 🌸`
+        },
+        {
+            title: "🏠 إشعار الانصراف والاستلام",
+            text: `السلام عليكم ورحمة الله وبركاته،\nنود إحاطتكم بأنه تم تسليم طفلكم الحبيب (${child.full_name}) عند انتهاء اليوم الدراسي بسلام بحمد الله.\nدمتم ودام أطفالكم في رعاية الله وحفظه 🌟`
+        },
+        {
+            title: "💰 تذكير لطيف بسداد المصروفات",
+            text: `السلام عليكم ورحمة الله وبركاته،\nنود تذكيركم بلطف بسداد اشتراك الحضانة الخاص بالطفل (${child.full_name})، والمبلغ المتبقي هو (${remBal || subFee} جنيه).\nشاكرين ومقدرين حسن تعاونكم الدائم معنا 🌿\n- إدارة ${BRAND.name}`
+        },
+        {
+            title: "🌟 بطاقة تشجيع وتفوق اليوم",
+            text: `ما شاء الله تبارك الله! 🌟\nيسر إدارة ومعلمات ${BRAND.name} أن تهنئكم بتميز وتألق بطلنا الصغير (${child.full_name}) اليوم في الأنشطة الصفية وحسن أدائه وخلقه الرفيع.\nبارك الله فيه وجعله قرة عين لكم 🌸`
+        },
+        {
+            title: "🩺 إشعار صحي / متابعة حالة",
+            text: `السلام عليكم ورحمة الله وبركاته،\nنحيطكم علماً بخصوص الطفل (${child.full_name}) في فصل (${stage}):\n(يرجى كتابة الملاحظة الصحية هنا)\nمع تمنياتنا له بموفور الصحة والسلامة دائماً 🤲`
+        }
+    ];
+
+    const existing = document.getElementById("smart-whatsapp-modal");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "smart-whatsapp-modal";
+    overlay.className = "modal-overlay modal-visible";
+    overlay.style.zIndex = "99999";
+
+    overlay.innerHTML = `
+        <div class="modal-box" style="max-width:580px; width:92%; text-align:right; border-radius:20px; padding:26px; background:var(--paper); color:var(--ink); border:1px solid var(--line); box-shadow:var(--shadow-lg);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.6rem; color:#22c55e;">💬</span>
+                    <div>
+                        <h3 style="margin:0; font-size:1.15rem; font-weight:800;">قوالب واتساب الذكية</h3>
+                        <small style="color:var(--ink-soft); font-weight:600;">الطفل: ${child.full_name} · هاتف: ${parentPhone || "غير مسجل"}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('smart-whatsapp-modal').remove()" style="font-size:1.2rem; padding:4px 10px;">✕</button>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-weight:700; font-size:0.88rem; display:block; margin-bottom:8px;">اختر القالب السريع:</label>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${templates.map((tpl, idx) => `
+                        <button type="button" class="btn btn-ghost" style="text-align:right; justify-content:flex-start; font-weight:700; padding:10px 14px; border-radius:10px; border:1px solid var(--line);" onclick="document.getElementById('smart-whatsapp-textarea').value = ${JSON.stringify(tpl.text)}">
+                            ${tpl.title}
+                        </button>
+                    `).join("")}
+                </div>
+            </div>
+
+            <div style="margin-bottom:18px;">
+                <label style="font-weight:700; font-size:0.88rem; display:block; margin-bottom:6px;">نص الرسالة (يمكنك التعديل والإضافة بحرية):</label>
+                <textarea id="smart-whatsapp-textarea" rows="5" style="width:100%; border:1px solid var(--line); border-radius:12px; padding:12px; font-family:inherit; font-size:0.92rem; resize:vertical; background:var(--bg); color:var(--ink);">${templates[0].text}</textarea>
+            </div>
+
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('smart-whatsapp-modal').remove()">إلغاء</button>
+                <button type="button" class="btn btn-whatsapp-pill" style="background:#22c55e; color:#fff; font-weight:800; padding:10px 20px; border-radius:10px; border:none; cursor:pointer;" onclick="
+                    const text = document.getElementById('smart-whatsapp-textarea').value.trim();
+                    if (!text) { showToast('يرجى كتابة نص الرسالة أولاً', 'error'); return; }
+                    openWhatsapp('${parentPhone}', text);
+                    document.getElementById('smart-whatsapp-modal').remove();
+                ">
+                    <span>🚀 إرسال الرسالة عبر واتساب</span>
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINTABLE STUDENT ID BADGE
+═══════════════════════════════════════════════════════════════════════════ */
+function printStudentBadge(childId) {
+    const child = getChildById(childId);
+    if (!child) return;
+    const parentPhone = getChildWhatsappPhone(child.id);
+    const stage = STAGE_LABELS[child.stage] || child.stage;
+    const ageVal = child.custom_age || `${calculateAge(child.birth_date)} سنوات`;
+
+    const printWin = window.open('', '_blank', 'width=800,height=900');
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>بطاقة تعريف طفل | ${child.full_name}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: 'Cairo', sans-serif; background:#f1f5f9; padding:40px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+                .badge-card { width: 340px; height: 520px; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid #e2e8f0; position: relative; overflow: hidden; display: flex; flex-direction: column; text-align: center; }
+                .badge-header { background: linear-gradient(135deg, #1e3a8a, #0284c7); color: #fff; padding: 20px 16px; border-bottom: 4px solid #f59e0b; }
+                .badge-header h2 { margin: 0; font-size: 1.25rem; font-weight: 900; }
+                .badge-header small { font-size: 0.8rem; opacity: 0.9; }
+                .badge-avatar-wrap { margin-top: -30px; display: flex; justify-content: center; }
+                .badge-avatar { width: 90px; height: 90px; border-radius: 50%; background: #f8fafc; border: 4px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; color: #1e3a8a; }
+                .badge-body { padding: 12px 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
+                .badge-name { font-size: 1.25rem; font-weight: 900; color: #0f172a; margin: 4px 0; }
+                .badge-stage { display: inline-block; background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.82rem; margin-bottom: 8px; }
+                .badge-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 4px 0; border-bottom: 1px dashed #e2e8f0; }
+                .badge-row strong { color: #64748b; }
+                .badge-row span { color: #0f172a; font-weight: 700; }
+                .badge-qr { margin: 10px auto 4px auto; width: 60px; height: 60px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; display:flex; align-items:center; justify-content:center; font-size:0.65rem; color:#64748b; font-weight:bold; }
+                .badge-footer { background: #f8fafc; padding: 8px; font-size: 0.75rem; color: #94a3b8; border-top: 1px solid #e2e8f0; font-weight: 600; }
+                @media print { body { background: #fff; padding: 0; } .badge-card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; } .no-print { display: none; } }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="margin-bottom:20px; display:flex; gap:10px;">
+                <button onclick="window.print()" style="padding:10px 24px; background:#2563eb; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1rem; font-family:inherit;">🖨️ طباعة الكارنيه الآن</button>
+                <button onclick="window.close()" style="padding:10px 20px; background:#64748b; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1rem; font-family:inherit;">إغلاق</button>
+            </div>
+            <div class="badge-card">
+                <div class="badge-header">
+                    <h2>${BRAND.name}</h2>
+                    <small>بطاقة تعريف طفل | العام الدراسي 2025 / 2026</small>
+                </div>
+                <div class="badge-avatar-wrap">
+                    <div class="badge-avatar">${child.full_name.charAt(0)}</div>
+                </div>
+                <div class="badge-body">
+                    <div class="badge-name">${child.full_name}</div>
+                    <div><span class="badge-stage">${stage}</span></div>
+                    <div class="badge-row"><strong>السن:</strong><span>${ageVal}</span></div>
+                    <div class="badge-row"><strong>هاتف الطوارئ:</strong><span>${parentPhone || "-"}</span></div>
+                    <div class="badge-row"><strong>الحالة الصحية:</strong><span>${child.health_status || "سليم"}</span></div>
+                    <div class="badge-qr">QR CODE</div>
+                </div>
+                <div class="badge-footer">
+                    العنوان: ${BRAND.address} · هاتف: ${BRAND.phone}
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINTABLE CERTIFICATE OF APPRECIATION
+═══════════════════════════════════════════════════════════════════════════ */
+function showCertificateModal(childId) {
+    const child = getChildById(childId);
+    if (!child) return;
+
+    const certTypes = [
+        { id: "quran", title: "📖 شهادة حفظ القرآن الكريم وتلاوته", defaultReason: "لحفظه المتقن وحسن تلاوته لآيات الذكر الحكيم وتميزه في حلقة القرآن" },
+        { id: "excellence", title: "🌟 شهادة تميز وسلوك إيجابي راقٍ", defaultReason: "لحسن خلقه وأدبه الرفيع وتعاونه المتميز مع زملائه ومعلماته" },
+        { id: "academic", title: "🎓 شهادة تفوق في المنهج التعليمي", defaultReason: "لتفوقه الدراسي وإتقانه لمهارات القراءة والكتابة والأنشطة الإبداعية" }
+    ];
+
+    const existing = document.getElementById("cert-modal");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "cert-modal";
+    overlay.className = "modal-overlay modal-visible";
+    overlay.style.zIndex = "99999";
+
+    overlay.innerHTML = `
+        <div class="modal-box" style="max-width:540px; width:92%; text-align:right; border-radius:20px; padding:26px; background:var(--paper); color:var(--ink); border:1px solid var(--line); box-shadow:var(--shadow-lg);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.6rem; color:#f59e0b;">🎓</span>
+                    <h3 style="margin:0; font-size:1.15rem; font-weight:800;">إصدار شهادة تقدير وتكريم</h3>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('cert-modal').remove()">✕</button>
+            </div>
+
+            <div style="margin-bottom:14px;">
+                <label style="font-weight:700; font-size:0.88rem; display:block; margin-bottom:6px;">اسم الطفل المكرم:</label>
+                <input type="text" value="${child.full_name}" readonly style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); background:var(--bg); font-weight:800;">
+            </div>
+
+            <div style="margin-bottom:14px;">
+                <label style="font-weight:700; font-size:0.88rem; display:block; margin-bottom:6px;">نوع الشهادة:</label>
+                <select id="cert-type-select" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); font-weight:700;" onchange="
+                    const map = {'quran': '${certTypes[0].defaultReason}', 'excellence': '${certTypes[1].defaultReason}', 'academic': '${certTypes[2].defaultReason}'};
+                    document.getElementById('cert-reason-input').value = map[this.value] || '';
+                ">
+                    ${certTypes.map(c => `<option value="${c.id}">${c.title}</option>`).join("")}
+                </select>
+            </div>
+
+            <div style="margin-bottom:18px;">
+                <label style="font-weight:700; font-size:0.88rem; display:block; margin-bottom:6px;">سبب التكريم والثناء:</label>
+                <textarea id="cert-reason-input" rows="3" style="width:100%; padding:10px; border-radius:10px; border:1px solid var(--line); font-family:inherit; font-size:0.9rem;">${certTypes[0].defaultReason}</textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('cert-modal').remove()">إلغاء</button>
+                <button type="button" class="btn btn-primary" style="font-weight:800; padding:10px 22px;" onclick="
+                    const reason = document.getElementById('cert-reason-input').value;
+                    const type = document.getElementById('cert-type-select').value;
+                    printCertificate('${child.id}', type, reason);
+                    document.getElementById('cert-modal').remove();
+                ">
+                    🖨️ طباعة الشهادة الفاخرة A4
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function printCertificate(childId, certType, reason) {
+    const child = getChildById(childId);
+    if (!child) return;
+    const stage = STAGE_LABELS[child.stage] || child.stage;
+
+    const titles = {
+        quran: "شهادة حفظ وتكريم قرآني",
+        excellence: "شهادة شكر وتقدير للتميز والسلوك",
+        academic: "شهادة تفوق وإتقان تعليمي"
+    };
+
+    const printWin = window.open('', '_blank', 'width=1000,height=750');
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>شهادة تقدير | ${child.full_name}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800;900&family=Reem+Kufi:wght@700&display=swap" rel="stylesheet">
+            <style>
+                @page { size: A4 landscape; margin: 0; }
+                body { font-family: 'Cairo', sans-serif; background: #fafafa; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+                .cert-container { width: 920px; height: 600px; background: #ffffff; border: 12px double #ca8a04; outline: 3px solid #1e3a8a; border-radius: 16px; padding: 30px 40px; box-sizing: border-box; text-align: center; position: relative; display: flex; flex-direction: column; justify-content: space-between; }
+                .cert-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+                .cert-header h3 { margin: 0; color: #1e3a8a; font-size: 1.3rem; font-weight: 900; }
+                .cert-title { font-family: 'Amiri', serif; font-size: 2.4rem; color: #ca8a04; font-weight: 700; margin: 10px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+                .cert-body { font-size: 1.15rem; line-height: 1.9; color: #1e293b; font-weight: 600; }
+                .cert-name { font-family: 'Reem Kufi', sans-serif; font-size: 2rem; color: #1e3a8a; font-weight: 900; text-decoration: underline; margin: 6px 0; }
+                .cert-footer { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 20px; border-top: 1px dashed #cbd5e1; padding-top: 16px; }
+                .cert-seal { width: 85px; height: 85px; border-radius: 50%; border: 3px dashed #ca8a04; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #ca8a04; font-size: 0.9rem; transform: rotate(-10deg); }
+                .cert-sign { font-weight: 800; color: #0f172a; font-size: 1rem; }
+                @media print { body { padding: 0; background: #fff; } .cert-container { width: 100vw; height: 96vh; border-width: 10px; box-shadow: none; page-break-inside: avoid; } .no-print { display: none; } }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="margin-bottom:15px; display:flex; gap:10px;">
+                <button onclick="window.print()" style="padding:10px 26px; background:#ca8a04; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1.1rem; font-family:inherit;">🖨️ طباعة الشهادة الآن</button>
+                <button onclick="window.close()" style="padding:10px 20px; background:#64748b; color:#fff; font-weight:bold; border:none; border-radius:8px; cursor:pointer; font-size:1.1rem; font-family:inherit;">إغلاق</button>
+            </div>
+            <div class="cert-container">
+                <div class="cert-header">
+                    <div>
+                        <h3>${BRAND.name}</h3>
+                        <small style="color:#64748b; font-weight:700;">${BRAND.tagline}</small>
+                    </div>
+                    <div style="font-size:1.8rem;">✨ 🌸 ✨</div>
+                </div>
+
+                <div class="cert-title">${titles[certType] || "شهادة تقدير وتكريم"}</div>
+
+                <div class="cert-body">
+                    تتشرف إدارة ومعلمات الأكاديمية بمنح هذا التكريم لبطلنا الصغير:<br>
+                    <div class="cert-name">${child.full_name}</div>
+                    <span>المقيد بفصل: <strong>(${stage})</strong></span><br>
+                    <p style="margin:10px auto; max-width:750px; color:#475569; font-size:1.1rem;">
+                        ${reason || "تقديراً لجهوده وتألقه وسلوكه الطيب وتميزه الدائم داخل الأكاديمية"}
+                    </p>
+                    <span>سائلين المولى عز وجل له دوام التوفيق والنجاح وأن يجعله ذخراً لوالديه وأمته 🤲</span>
+                </div>
+
+                <div class="cert-footer">
+                    <div class="cert-sign">
+                        <span>التاريخ: ${formatArabicDate(todayDate())}</span><br>
+                        <span>إدارة الأكاديمية: ....................</span>
+                    </div>
+                    <div class="cert-seal">ختم التميز<br>معتمد</div>
+                    <div class="cert-sign">
+                        <span>معلمة الفصل: ....................</span><br>
+                        <span>توقيع الإشراف: ....................</span>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINTABLE STATEMENT OF ACCOUNT (كشف حساب مالي)
+═══════════════════════════════════════════════════════════════════════════ */
+function printChildStatement(childId) {
+    const child = getChildById(childId);
+    if (!child) return;
+    const parentPhone = getChildWhatsappPhone(child.id);
+    const stage = STAGE_LABELS[child.stage] || child.stage;
+    const childFees = state.fees.filter(f => f.child_id === child.id);
+    const subFee = child.subscription_fee || 0;
+    const remBal = child.remaining_balance || 0;
+
+    const printWin = window.open('', '_blank', 'width=900,height=800');
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>كشف حساب مالي | ${child.full_name}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: 'Cairo', sans-serif; padding: 30px; color: #0f172a; }
+                .statement-head { display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
+                .statement-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                .statement-table th, .statement-table td { border: 1px solid #cbd5e1; padding: 10px 14px; text-align: right; }
+                .statement-table th { background: #f1f5f9; font-weight: 800; }
+                .summary-box { display: flex; gap: 20px; margin: 20px 0; }
+                .summary-card { flex: 1; padding: 14px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center; }
+                @media print { .no-print { display: none; } }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="margin-bottom:20px;">
+                <button onclick="window.print()" style="padding:8px 20px; background:#2563eb; color:#fff; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">🖨️ طباعة كشف الحساب</button>
+            </div>
+            <div class="statement-head">
+                <div>
+                    <h2 style="margin:0;">${BRAND.name}</h2>
+                    <p style="margin:4px 0; color:#64748b;">كشف حساب تفصيلي للطفل</p>
+                </div>
+                <div style="text-align:left;">
+                    <strong>تاريخ التقرير:</strong> ${formatArabicDate(todayDate())}<br>
+                    <strong>هاتف ولي الأمر:</strong> ${parentPhone || "-"}
+                </div>
+            </div>
+
+            <div style="background:#f8fafc; padding:14px; border-radius:10px; margin-bottom:16px;">
+                <strong>اسم الطفل:</strong> ${child.full_name} &nbsp; | &nbsp;
+                <strong>المرحلة/الفصل:</strong> ${stage} &nbsp; | &nbsp;
+                <strong>الاشتراك الشهري:</strong> ${formatCurrency(subFee)}
+            </div>
+
+            <div class="summary-box">
+                <div class="summary-card">
+                    <span style="color:#64748b; font-weight:700;">إجمالي السجلات المسجلة</span>
+                    <h3 style="margin:6px 0; font-size:1.4rem;">${childFees.length} شهور</h3>
+                </div>
+                <div class="summary-card">
+                    <span style="color:#64748b; font-weight:700;">الرصيد المتبقي المستحق</span>
+                    <h3 style="margin:6px 0; font-size:1.4rem; color:${remBal ? '#ef4444' : '#10b981'};">${formatCurrency(remBal)}</h3>
+                </div>
+            </div>
+
+            <table class="statement-table">
+                <thead>
+                    <tr>
+                        <th>الشهر / الفترة</th>
+                        <th>المبلغ المستحق</th>
+                        <th>المبلغ المسدد</th>
+                        <th>تاريخ السداد</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${childFees.length ? childFees.map(f => `
+                        <tr>
+                            <td>${f.month || "-"}</td>
+                            <td>${formatCurrency(f.amount || subFee)}</td>
+                            <td>${formatCurrency(f.paid_amount || 0)}</td>
+                            <td>${f.payment_date ? formatArabicDate(f.payment_date) : "-"}</td>
+                            <td><strong style="color:${f.status === 'PAID' ? '#10b981' : '#ef4444'};">${f.status === 'PAID' ? 'تم السداد ✓' : 'متبقي / متأخر'}</strong></td>
+                        </tr>
+                    `).join("") : `
+                        <tr>
+                            <td>الشهر الحالي</td>
+                            <td>${formatCurrency(subFee)}</td>
+                            <td>${formatCurrency(subFee - remBal)}</td>
+                            <td>${formatArabicDate(todayDate())}</td>
+                            <td><strong style="color:${remBal ? '#ef4444' : '#10b981'};">${remBal ? 'متبقي ' + formatCurrency(remBal) : 'مسدد بالكامل ✓'}</strong></td>
+                        </tr>
+                    `}
+                </tbody>
+            </table>
+
+            <div style="margin-top:40px; display:flex; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:20px;">
+                <div>توقيع المحاسب / الإدارة: ....................</div>
+                <div>ختم الأكاديمية: ....................</div>
+            </div>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL INSTANT SEARCH LISTENER
+═══════════════════════════════════════════════════════════════════════════ */
+document.addEventListener("input", (e) => {
+    if (e.target && e.target.id === "global-search-input") {
+        const query = e.target.value.trim().toLowerCase();
+        const resultsEl = document.getElementById("global-search-results");
+        if (!resultsEl) return;
+
+        if (!query) {
+            resultsEl.style.display = "none";
+            resultsEl.innerHTML = "";
+            return;
+        }
+
+        const matchedChildren = state.children.filter(c => 
+            (c.full_name || "").toLowerCase().includes(query) ||
+            (c.child_address || "").toLowerCase().includes(query) ||
+            (getChildWhatsappPhone(c.id) || "").includes(query)
+        ).slice(0, 5);
+
+        const matchedStaff = state.staff.filter(s =>
+            (s.full_name || "").toLowerCase().includes(query) ||
+            (s.phone || "").includes(query) ||
+            (s.role_title || "").toLowerCase().includes(query)
+        ).slice(0, 3);
+
+        if (!matchedChildren.length && !matchedStaff.length) {
+            resultsEl.style.display = "block";
+            resultsEl.innerHTML = `<div style="padding:12px; text-align:center; color:var(--ink-soft); font-size:0.85rem;">لا توجد نتائج مطابقة لـ "${query}"</div>`;
+            return;
+        }
+
+        let html = "";
+        if (matchedChildren.length) {
+            html += `<div style="padding:4px 8px; font-size:0.75rem; font-weight:800; color:var(--accent);">👶 الأطفال (${matchedChildren.length})</div>`;
+            html += matchedChildren.map(c => `
+                <div 
+                    style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer; gap:10px; transition:background 0.15s ease;"
+                    onmouseover="this.style.background='var(--bg)'"
+                    onmouseout="this.style.background='transparent'"
+                    onclick="
+                        ui.activeSection = 'children';
+                        ui.selectedChildId = '${c.id}';
+                        render();
+                    "
+                >
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="width:28px; height:28px; border-radius:6px; background:#3b82f6; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem;">${c.full_name.charAt(0)}</span>
+                        <div>
+                            <strong style="display:block; font-size:0.88rem; color:var(--ink);">${c.full_name}</strong>
+                            <small style="color:var(--ink-soft); font-size:0.75rem;">${STAGE_LABELS[c.stage] || c.stage} · هاتف: ${getChildWhatsappPhone(c.id) || "-"}</small>
+                        </div>
+                    </div>
+                    <span style="font-size:0.75rem; color:var(--accent); font-weight:700;">عرض الملف ←</span>
+                </div>
+            `).join("");
+        }
+
+        if (matchedStaff.length) {
+            html += `<div style="padding:8px 8px 4px 8px; font-size:0.75rem; font-weight:800; color:#8b5cf6; border-top:1px solid var(--line); margin-top:4px;">👩‍🏫 المعلمات والكادر (${matchedStaff.length})</div>`;
+            html += matchedStaff.map(s => `
+                <div 
+                    style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-radius:8px; cursor:pointer; gap:10px; transition:background 0.15s ease;"
+                    onmouseover="this.style.background='var(--bg)'"
+                    onmouseout="this.style.background='transparent'"
+                    onclick="
+                        ui.activeSection = 'staff';
+                        render();
+                    "
+                >
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="width:28px; height:28px; border-radius:6px; background:#8b5cf6; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem;">${s.full_name.charAt(0)}</span>
+                        <div>
+                            <strong style="display:block; font-size:0.88rem; color:var(--ink);">${s.full_name}</strong>
+                            <small style="color:var(--ink-soft); font-size:0.75rem;">${s.role_title || "معلمة"} · ${s.phone || ""}</small>
+                        </div>
+                    </div>
+                    <span style="font-size:0.75rem; color:#8b5cf6; font-weight:700;">الكادر ←</span>
+                </div>
+            `).join("");
+        }
+
+        resultsEl.style.display = "block";
+        resultsEl.innerHTML = html;
+    }
+});
+
+document.addEventListener("click", (e) => {
+    const resultsEl = document.getElementById("global-search-results");
+    const searchInput = document.getElementById("global-search-input");
+    if (resultsEl && !resultsEl.contains(e.target) && e.target !== searchInput) {
+        resultsEl.style.display = "none";
+    }
+});
