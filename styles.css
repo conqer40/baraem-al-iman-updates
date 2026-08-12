@@ -1,32 +1,63 @@
 :root {
-    --bg: #f3f6fa;
-    --bg-deep: #ecf0f5;
-    --paper: rgba(255, 255, 255, 0.98);
+    --bg: #f8fafc;
+    --bg-deep: #edf2f7;
+    --paper: rgba(255, 255, 255, 0.96);
     --paper-strong: #ffffff;
-    --paper-muted: #f7f9fb;
-    --ink: #16212b;
-    --ink-soft: #677482;
-    --line: rgba(22, 33, 43, 0.09);
-    --line-strong: rgba(22, 33, 43, 0.16);
-    --accent: #147a70;
-    --accent-soft: rgba(20, 122, 112, 0.12);
-    --moss: #2f5c8b;
-    --moss-soft: rgba(47, 92, 139, 0.12);
-    --sun: #b8933d;
-    --sun-soft: rgba(184, 147, 61, 0.12);
-    --danger: #b85349;
-    --danger-soft: rgba(184, 83, 73, 0.12);
-    --success: #2f7d60;
-    --success-soft: rgba(47, 125, 96, 0.12);
-    --shadow-lg: 0 8px 24px rgba(22, 33, 43, 0.05);
-    --shadow-md: 0 4px 14px rgba(22, 33, 43, 0.04);
-    --radius-xl: 16px;
+    --paper-muted: #f1f5f9;
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --line: rgba(15, 23, 42, 0.08);
+    --line-strong: rgba(15, 23, 42, 0.16);
+    --accent: #2563eb;
+    --accent-soft: rgba(37, 99, 235, 0.12);
+    --accent-gradient: linear-gradient(135deg, #1e40af, #3b82f6);
+    --moss: #0d9488;
+    --moss-soft: rgba(13, 148, 136, 0.12);
+    --sun: #d97706;
+    --sun-soft: rgba(217, 119, 6, 0.12);
+    --danger: #dc2626;
+    --danger-soft: rgba(220, 38, 38, 0.12);
+    --success: #16a34a;
+    --success-soft: rgba(22, 163, 74, 0.12);
+    --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.25);
+    --radius-xl: 18px;
     --radius-lg: 14px;
     --radius-md: 10px;
     --radius-sm: 8px;
-    --sidebar-width: 268px;
-    --header-height: 86px;
-    --font-ui: "Segoe UI", Tahoma, "Arial Unicode MS", sans-serif;
+    --sidebar-width: 275px;
+    --header-height: 84px;
+    --font-ui: "Cairo", "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ═══════════════════════════════════════════
+   GLOBAL DARK MODE THEME ENGINE
+═══════════════════════════════════════════ */
+body.dark-theme,
+[data-theme="dark"] {
+    --bg: #090d16;
+    --bg-deep: #050811;
+    --paper: rgba(15, 23, 42, 0.94);
+    --paper-strong: #0f172a;
+    --paper-muted: #1e293b;
+    --ink: #f8fafc;
+    --ink-soft: #94a3b8;
+    --line: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.15);
+    --accent: #3b82f6;
+    --accent-soft: rgba(59, 130, 246, 0.18);
+    --moss: #14b8a6;
+    --moss-soft: rgba(20, 184, 166, 0.18);
+    --sun: #f59e0b;
+    --sun-soft: rgba(245, 158, 11, 0.18);
+    --danger: #ef4444;
+    --danger-soft: rgba(239, 68, 68, 0.18);
+    --success: #22c55e;
+    --success-soft: rgba(34, 197, 94, 0.18);
+    --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.45);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
 }
 
 * {

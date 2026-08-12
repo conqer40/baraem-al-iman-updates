@@ -579,6 +579,15 @@ document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
 async function initAndRender() {
+    const savedTheme = localStorage.getItem("BARAEM_THEME") || "light";
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark-theme");
+        document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+        document.body.classList.remove("dark-theme");
+        document.documentElement.setAttribute("data-theme", "light");
+    }
+
     const cloudReady = initCloud();
     if (cloudReady && state.session.userId) {
         const cloudState = await loadFromCloud();
@@ -1766,9 +1775,9 @@ function renderShell() {
                 <header class="topbar">
                     <div class="topbar-main">
                         <div class="topbar-brand">
-                            <div class="topbar-mark">${BRAND.initials}</div>
+                            <img src="./logo.png" alt="لوجو براعم الإيمان" class="topbar-logo-img" style="width:48px; height:48px; border-radius:12px; object-fit:contain; box-shadow:0 4px 12px rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.2);">
                             <div class="topbar-brand-copy">
-                                <div class="eyebrow topbar-eyebrow">${isHome ? "بوابة الأقسام" : (navHint(ui.activeSection) || "القسم الحالي")}</div>
+                                <div class="eyebrow topbar-eyebrow">${isHome ? "أكاديمية براعم الإيمان" : (navHint(ui.activeSection) || "القسم الحالي")}</div>
                                 <div class="title-block">
                                     <h2>${sectionMeta.title}</h2>
                                     <p>${sectionMeta.description}</p>
@@ -1778,14 +1787,22 @@ function renderShell() {
                     </div>
                     <div class="topbar-side">
                         ${!isHome ? `
-                            <button class="btn btn-secondary" type="button" data-action="go-home">الرئيسية</button>
+                            <button class="btn btn-secondary" type="button" data-action="go-home">🏠 الرئيسية</button>
                         ` : ""}
-                        <button class="btn btn-primary btn-update-app" type="button" data-action="go-updates" title="فتح قسم تحديث البرنامج والدعم الفني">🔄 تحديث البرنامج</button>
+                        
+                        <button class="btn btn-ghost theme-toggle-btn" type="button" data-action="toggle-theme" title="تبديل الوضع الليلي / النهاري" style="font-size:1.15rem; padding:8px 14px; border-radius:10px;">
+                            ${document.body.classList.contains("dark-theme") ? "☀️ نهاري" : "🌙 ليلي"}
+                        </button>
+
+                        <button class="btn btn-primary btn-update-app" type="button" data-action="go-updates" title="فتح قسم تحديث البرنامج والدعم الفني" style="font-weight:700;">🔄 تحديث البرنامج</button>
+                        
                         <button class="btn btn-ghost tour-launch" type="button" data-action="start-tour" title="جولة تعريفية">
                             <span aria-hidden="true">?</span>
                             <span>جولة سريعة</span>
                         </button>
-                        <button class="btn btn-secondary" type="button" data-action="logout">تسجيل الخروج</button>
+                        
+                        <button class="btn btn-secondary" type="button" data-action="logout" style="color:var(--danger);">خروج</button>
+                        
                         <div class="info-chip">
                             <span>التاريخ</span>
                             <strong>${formatArabicDate(todayDate())}</strong>
@@ -5917,6 +5934,19 @@ function handleClick(event) {
                 } catch (e) {}
             }
             showToast("برنامج AnyDesk متاح فقط في نسخة سطح المكتب.");
+            return;
+        case "toggle-theme":
+            const currentIsDark = document.body.classList.contains("dark-theme");
+            const newTheme = currentIsDark ? "light" : "dark";
+            if (newTheme === "dark") {
+                document.body.classList.add("dark-theme");
+                document.documentElement.setAttribute("data-theme", "dark");
+            } else {
+                document.body.classList.remove("dark-theme");
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+            localStorage.setItem("BARAEM_THEME", newTheme);
+            render();
             return;
         case "go-home":
             ui.activeSection = "home";
