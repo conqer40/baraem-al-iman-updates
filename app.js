@@ -578,6 +578,98 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
+const CURRENT_APP_VERSION = "4.2.0";
+
+async function checkStartupUpdateNotification() {
+    try {
+        const updateUrl = localStorage.getItem('BARAEM_UPDATE_URL') || 'https://raw.githubusercontent.com/conqer40/baraem-al-iman-updates/main';
+        const manifestUrl = `${updateUrl.replace(/\/+$/, '')}/version.json?t=${Date.now()}`;
+        
+        const response = await fetch(manifestUrl, { cache: "no-store" });
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        if (!data || !data.version) return;
+
+        // Check if there is an update available compared to local build
+        const dismissedVersion = sessionStorage.getItem("BARAEM_DISMISSED_UPDATE");
+        if (data.version !== CURRENT_APP_VERSION && dismissedVersion !== data.version) {
+            setTimeout(() => {
+                showStartupUpdateModal(data);
+            }, 1200);
+        }
+    } catch (e) {
+        console.debug("Startup update check skipped:", e.message);
+    }
+}
+
+function showStartupUpdateModal(updateInfo) {
+    const existing = document.getElementById("startup-update-modal");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "startup-update-modal";
+    overlay.className = "modal-overlay modal-visible";
+    overlay.style.zIndex = "99999";
+    
+    const highlightsList = (updateInfo.highlights || [updateInfo.summary || "تحديثات وتحسينات هامة للنظام"])
+        .map(item => `<li style="margin-bottom:8px; display:flex; align-items:flex-start; gap:8px;"><span style="color:#10b981; font-weight:bold; font-size:1.1rem;">✓</span> <span>${item}</span></li>`)
+        .join("");
+
+    overlay.innerHTML = `
+        <div class="modal-box" style="max-width:560px; width:92%; text-align:right; border-radius:24px; padding:30px; background:linear-gradient(145deg, #0f172a, #1e293b); color:#f8fafc; border:1px solid rgba(255,255,255,0.15); box-shadow:0 25px 60px rgba(0,0,0,0.6); position:relative; overflow:hidden;">
+            <div style="position:absolute; top:-30px; left:-30px; width:150px; height:150px; background:radial-gradient(circle, rgba(59,130,246,0.3), transparent 70%); border-radius:50%; pointer-events:none;"></div>
+            
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:18px;">
+                <div style="width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg, #3b82f6, #1d4ed8); display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 8px 20px rgba(37,99,235,0.4);">
+                    🚀
+                </div>
+                <div>
+                    <span style="background:rgba(59,130,246,0.2); color:#93c5fd; font-size:0.78rem; font-weight:800; padding:3px 10px; border-radius:12px; border:1px solid rgba(59,130,246,0.3);">تحديث رسمي جديد متوفر (${updateInfo.version || "جديد"})</span>
+                    <h3 style="margin:4px 0 0 0; font-size:1.4rem; font-weight:900; color:#ffffff;">${updateInfo.title || "يتوفر تحديث جديد للبرنامج"}</h3>
+                </div>
+            </div>
+
+            <p style="color:#cbd5e1; font-size:0.95rem; line-height:1.7; margin-bottom:16px;">
+                ${updateInfo.summary || "تم إصدار تحديث جديد يحتوي على تحسينات هامة لأداء البرنامج والشاشات والميزات التالية:"}
+            </p>
+
+            <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:14px 18px; margin-bottom:22px;">
+                <strong style="display:block; color:#60a5fa; font-size:0.86rem; margin-bottom:8px;">📋 تفاصيل وميزات هذا التحديث:</strong>
+                <ul style="list-style:none; padding:0; margin:0; font-size:0.9rem; color:#e2e8f0; line-height:1.6;">
+                    ${highlightsList}
+                </ul>
+            </div>
+
+            <div style="display:flex; gap:12px; justify-content:flex-start; flex-wrap:wrap;">
+                <button class="btn btn-primary" id="btn-do-startup-update" style="padding:12px 26px; font-weight:800; font-size:0.98rem; border-radius:14px; background:linear-gradient(135deg, #2563eb, #1d4ed8); box-shadow:0 6px 20px rgba(37,99,235,0.4); display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer;">
+                    <span>⚡ تحديث وتثبيت التحديث الآن</span>
+                </button>
+                <button class="btn btn-secondary" id="btn-later-startup-update" style="padding:12px 20px; font-weight:700; font-size:0.92rem; border-radius:14px; background:rgba(255,255,255,0.08); color:#cbd5e1; border:1px solid rgba(255,255,255,0.12); cursor:pointer;">
+                    تحديث لاحقاً
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById("btn-do-startup-update")?.addEventListener("click", async () => {
+        const btn = document.getElementById("btn-do-startup-update");
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = "<span>⏳ جاري تنزيل وتثبيت التحديث...</span>";
+        }
+        await performAppUpdate();
+    });
+
+    document.getElementById("btn-later-startup-update")?.addEventListener("click", () => {
+        sessionStorage.setItem("BARAEM_DISMISSED_UPDATE", updateInfo.version || "1");
+        overlay.classList.remove("modal-visible");
+        setTimeout(() => overlay.remove(), 300);
+    });
+}
+
 async function initAndRender() {
     const savedTheme = localStorage.getItem("BARAEM_THEME") || "light";
     if (savedTheme === "dark") {
@@ -601,6 +693,7 @@ async function initAndRender() {
     }
     autoGenerateFeesIfNeeded();
     render();
+    checkStartupUpdateNotification();
 }
 initAndRender();
 
