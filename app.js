@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "4.5.0";
+const CURRENT_APP_VERSION = "4.6.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -7728,7 +7728,7 @@ async function performAppUpdate() {
         try {
             const res = await ipcRenderer.invoke('app:update-files', {
                 baseUrl: updateUrl,
-                files: ['app.js', 'styles.css', 'index.html', 'ai-logic.js', 'version.json']
+                files: ['app.js', 'styles.css', 'index.html', 'ai-logic.js', 'version.json', 'logo.png', 'hero_bg.png']
             });
             if (res && res.ok) {
                 const successfulFiles = (res.results || []).filter(r => r.success);
