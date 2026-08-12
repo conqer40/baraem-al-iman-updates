@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.0.0";
+const CURRENT_APP_VERSION = "5.1.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -2741,6 +2741,27 @@ function renderAddChildSection() {
                 </div>
                 <form class="stack" data-form="child">
                     <input type="hidden" name="id" value="${formChild?.id || ""}">
+                    
+                    <!-- CHILD PHOTO ATTACHMENT -->
+                    <div class="field" style="background:var(--bg); border:1px dashed var(--line); border-radius:14px; padding:14px; display:flex; align-items:center; gap:16px; margin-bottom:8px;">
+                        <div id="child-photo-preview" style="width:68px; height:68px; border-radius:14px; background:var(--paper); border:2px solid var(--line); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:1.6rem; color:var(--ink-soft); box-shadow:var(--shadow-sm); flex-shrink:0;">
+                            ${formChild?.photo_url ? `<img src="${formChild.photo_url}" style="width:100%; height:100%; object-fit:cover;">` : (formChild?.full_name ? formChild.full_name.charAt(0) : "📷")}
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-weight:800; font-size:0.88rem; margin-bottom:4px; display:block;">صورة الطفل الشخصية (تظهر في الكارنيه والملف)</label>
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <input type="file" id="child-photo-file-input" accept="image/*" style="display:none;" onchange="handleChildPhotoUpload(this)">
+                                <input type="hidden" name="photo_url" id="child-photo-url-hidden" value="${formChild?.photo_url || ""}">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('child-photo-file-input').click()" style="padding:6px 12px; font-weight:700; font-size:0.82rem;">
+                                    📁 اختيار صورة من الجهاز
+                                </button>
+                                <button type="button" class="btn btn-ghost btn-sm" onclick="clearChildPhoto()" style="padding:6px 10px; color:#ef4444; font-size:0.82rem;" title="حذف الصورة">
+                                    ✕ مسح الصورة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid-2">
                         <div class="field">
                             <label>اسم الطفل</label>
@@ -2915,8 +2936,8 @@ function renderChildProfile(profile) {
         <div class="profile-card">
             <div class="profile-head" style="align-items:flex-start;">
                 <div style="display:flex; align-items:center; gap:14px;">
-                    <div style="width:54px; height:54px; border-radius:16px; background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:800; box-shadow:0 6px 16px rgba(59,130,246,0.3);">
-                        ${profile.child.full_name.charAt(0)}
+                    <div style="width:58px; height:58px; border-radius:16px; background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:800; box-shadow:0 6px 16px rgba(59,130,246,0.3); overflow:hidden; flex-shrink:0;">
+                        ${profile.child.photo_url ? `<img src="${profile.child.photo_url}" style="width:100%; height:100%; object-fit:cover;">` : profile.child.full_name.charAt(0)}
                     </div>
                     <div>
                         <h3 style="margin:0 0 4px 0; font-size:1.25rem; font-weight:900;">${profile.child.full_name}</h3>
@@ -7822,7 +7843,7 @@ async function performAppUpdate() {
 
 function renderUpdatesSection() {
     const activeTab = ui.updatesTab || "overview";
-    const appVersion = "الإصدار 4.3.0 الذهبي (أحدث نسخة محدثة 2026)";
+    const appVersion = `الإصدار ${CURRENT_APP_VERSION} الذهبي (أحدث نسخة محدثة 2026)`;
     
     return `
         <div class="updates-wrapper dark-support-theme">
@@ -7841,8 +7862,8 @@ function renderUpdatesSection() {
                 <div class="updates-status-grid">
                     <div class="updates-status-card">
                         <span class="status-label">إصدار النظام الحالي</span>
-                        <strong class="status-value" style="color:#60a5fa;">${appVersion}</strong>
-                        <small class="status-hint">✓ تم تفعيل الرواتب، إلغاء التعاقد، مواعيد 8-2</small>
+                        <strong class="status-value" style="color:#60a5fa;">v${CURRENT_APP_VERSION}</strong>
+                        <small class="status-hint">✓ تم تفعيل البحث الفوري، صور الأطفال، الكارنيهات، والشهادات</small>
                     </div>
                     <div class="updates-status-card">
                         <span class="status-label">حماية وتأمين البيانات</span>
@@ -7865,7 +7886,7 @@ function renderUpdatesSection() {
                         💬 قنوات الدعم والمصمم
                     </button>
                     <button class="btn ${activeTab === 'changelog' ? 'btn-primary' : 'btn-ghost'}" type="button" data-action="switch-updates-tab" data-id="changelog" style="font-weight:700;">
-                        📋 سجل التحديثات والميزات
+                        📋 سجل التحديثات والميزات (v${CURRENT_APP_VERSION})
                     </button>
                 </div>
             </section>
@@ -7949,53 +7970,68 @@ function renderUpdatesSection() {
                 <section class="panel">
                     <div class="panel-header">
                         <div>
-                            <h3 style="color:#f8fafc;">📋 سجل أحدث التحديثات والميزات المطبقة</h3>
-                            <p style="color:#94a3b8;">قائمة كاملة بجميع الميزات والتحسينات التي تمت إضافتها للنظام:</p>
+                            <h3 style="color:#f8fafc;">📋 سجل الإصدارات والتحديثات التاريخية</h3>
+                            <p style="color:#94a3b8;">سجل كامل وتفصيلي بكل الميزات والتحديثات المطبقة في كل إصدار:</p>
                         </div>
                     </div>
-                    <div class="changelog-list">
-                        <div class="changelog-item">
-                            <div class="changelog-badge" style="background:#065f46; color:#34d399; border-color:#059669;">جديد v4.3.0</div>
-                            <div>
-                                <strong style="color:#34d399; font-size:1rem;">مركز التحديث والدعم الفني بالوضع الليلي الفاخر (Dark Mode):</strong>
-                                <p style="color:#cbd5e1;">شاشة عصرية داكنة ومريحة للعين، مع أزرار فحص وتحديث فوري، وقناة تواصل واتساب مباشرة مع المصمم (+201022104948).</p>
+                    <div class="changelog-list" style="display:flex; flex-direction:column; gap:16px;">
+                        
+                        <!-- Version 5.1.0 -->
+                        <div class="changelog-item" style="border:1px solid #10b981; background:rgba(16,185,129,0.06); border-radius:14px; padding:18px;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                <div class="changelog-badge" style="background:#065f46; color:#34d399; border-color:#059669; font-weight:800; font-size:0.9rem; padding:4px 12px;">🌟 الإصدار 5.1.0 (الحالي)</div>
+                                <small style="color:#94a3b8; font-weight:700;">2026-08-13</small>
                             </div>
+                            <ul style="margin:0; padding-right:20px; line-height:1.9; color:#f1f5f9; font-size:0.92rem;">
+                                <li><strong>📸 إرفاق صورة الطفل الشخصية:</strong> رفع صورة الطفل من الكمبيوتر وضغطها تلقائياً لتناسب قواعد البيانات.</li>
+                                <li><strong>🪪 ظهور صورة الطفل في الكارنيه والملف:</strong> دمج الصورة الشخصية داخل بادج وكارنيه الطفل وبطاقة التعريف.</li>
+                                <li><strong>💬 تنشيط قوالب رسائل الواتساب الفورية:</strong> التبديل اللحظي بين القوالب وتمييز القالب المختار فوراً بنقرة واحدة.</li>
+                                <li><strong>📋 سجل التحديثات المطور التفاعلي:</strong> عرض تاريخي منظم لجميع إصدارات النظام وتفاصيلها.</li>
+                            </ul>
                         </div>
-                        <div class="changelog-item">
-                            <div class="changelog-badge">جديد</div>
-                            <div>
-                                <strong style="color:#f8fafc;">تعديل الرواتب والمرتبات الأساسية:</strong>
-                                <p style="color:#94a3b8;">إمكانية تعديل وتحديث مرتبات المعلمات والموظفين مباشرة من شاشة الموظفين وقسم الرواتب مع الحفظ اللحظي والدائم.</p>
+
+                        <!-- Version 5.0.0 -->
+                        <div class="changelog-item" style="border:1px solid #334155; border-radius:14px; padding:18px; background:rgba(15,23,42,0.6);">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                <div class="changelog-badge" style="background:#1e3a8a; color:#93c5fd; border-color:#3b82f6; font-weight:800; font-size:0.9rem; padding:4px 12px;">🚀 الإصدار 5.0.0 (المنظومة المتكاملة)</div>
+                                <small style="color:#94a3b8; font-weight:700;">2026-08-13</small>
                             </div>
+                            <ul style="margin:0; padding-right:20px; line-height:1.9; color:#cbd5e1; font-size:0.92rem;">
+                                <li><strong>🔍 البحث الشامل الفوري (Global Spotlight Search):</strong> بحث سريع بالاسم، الهاتف، أو المعلمة من الهيدر.</li>
+                                <li><strong>🪪 طباعة كارنيهات وبادجات الأطفال الذكية:</strong> بطاقة هوية رسمية لكل طفل مع رمز QR ورقم الطوارئ.</li>
+                                <li><strong>🎓 شهادات التقدير والتكريم الفاخرة A4:</strong> نماذج شهادات مذهبة لحفظ القرآن، السلوك الإيجابي، والتفوق.</li>
+                                <li><strong>💬 قوالب رسائل واتساب الذكية:</strong> إشعار الوصول الآمن، إشعار الانصراف، وتذكير المصروفات.</li>
+                                <li><strong>📑 كشف حساب مالي تفصيلي لولي الأمر:</strong> تقرير مالي معتمد يوضح الاشتراكات والمدفوعات والمتبقي.</li>
+                                <li><strong>🩺 تنبيهات الحالات الصحية والحساسية:</strong> تمييز واضح لأي حالة صحية خاصة داخل ملف الطفل.</li>
+                            </ul>
                         </div>
-                        <div class="changelog-item">
-                            <div class="changelog-badge">جديد</div>
-                            <div>
-                                <strong style="color:#f8fafc;">إلغاء وتفعيل التعاقد المباشر:</strong>
-                                <p style="color:#94a3b8;">أزرار سريعة ومؤمنة في جدول الموظفين لإلغاء التعاقد أو إعادة التفعيل بضغطة زر واحدة مع رسائل تأكيد وحفظ فوري.</p>
+
+                        <!-- Version 4.6.0 -->
+                        <div class="changelog-item" style="border:1px solid #334155; border-radius:14px; padding:18px; background:rgba(15,23,42,0.4);">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                <div class="changelog-badge" style="background:#334155; color:#cbd5e1; font-weight:800; font-size:0.85rem; padding:4px 10px;">الإصدار 4.6.0</div>
+                                <small style="color:#94a3b8; font-weight:700;">2026-08-12</small>
                             </div>
+                            <ul style="margin:0; padding-right:20px; line-height:1.9; color:#94a3b8; font-size:0.9rem;">
+                                <li><strong>🖼️ بنر بانورامي ثلاثي الأبعاد:</strong> خلفية بصرية جمالية مخصصة للأكاديمية في أعلى الشاشة الرئيسية.</li>
+                                <li><strong>⚡ بوابة الأقسام كأيقونات سريعة:</strong> شبكة أيقونات عصرية ملونة لجميع أقسام الحضانة.</li>
+                                <li><strong>💎 أيقونة البرنامج ثلاثية الأبعاد:</strong> تصميم 3D فاخر مدمج في ملف التشغيل <code>start.exe</code>.</li>
+                            </ul>
                         </div>
-                        <div class="changelog-item">
-                            <div class="changelog-badge">محدث</div>
-                            <div>
-                                <strong style="color:#f8fafc;">مواعيد العمل الرسمية (من 8 صباحاً إلى 2 ظهراً):</strong>
-                                <p style="color:#94a3b8;">ضبط الوردية الصباحية من 08:00 إلى 14:00 في كافة الكشوف وقوالب الطباعة وحسابات ساعات العمل والحضور.</p>
+
+                        <!-- Version 4.5.0 & Earlier -->
+                        <div class="changelog-item" style="border:1px solid #334155; border-radius:14px; padding:18px; background:rgba(15,23,42,0.4);">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                <div class="changelog-badge" style="background:#334155; color:#cbd5e1; font-weight:800; font-size:0.85rem; padding:4px 10px;">الإصدارات 4.0 - 4.5</div>
+                                <small style="color:#94a3b8; font-weight:700;">2026-08-12</small>
                             </div>
+                            <ul style="margin:0; padding-right:20px; line-height:1.9; color:#94a3b8; font-size:0.9rem;">
+                                <li><strong>☀️ الوضع النهاري والليلي:</strong> التبديل السلس بين الثيمات مع حفظ التفضيل.</li>
+                                <li><strong>💵 إدارة كادر المعلمات والرواتب:</strong> تعديل الرواتب الأساسية، إلغاء التعاقد، والشيفتات.</li>
+                                <li><strong>🛡️ نظام التحديث السحابي المنفصل:</strong> تحديث البرنامج مع الحفاظ الكامل والمطلق على قاعدة البيانات.</li>
+                            </ul>
                         </div>
-                        <div class="changelog-item">
-                            <div class="changelog-badge">محدث</div>
-                            <div>
-                                <strong style="color:#f8fafc;">السبت والجمعة إجازة أسبوعية رسمية:</strong>
-                                <p style="color:#94a3b8;">اعتماد السبت والجمعة إجازة أسبوعية رسمية في جداول الحضور والانصراف وكشوف الرواتب الشهرية.</p>
-                            </div>
-                        </div>
-                        <div class="changelog-item">
-                            <div class="changelog-badge">أمان</div>
-                            <div>
-                                <strong style="color:#f8fafc;">فصل التحديثات عن قاعدة البيانات (حماية البيانات 100%):</strong>
-                                <p style="color:#94a3b8;">تحديث كود وشاشات البرنامج من الإنترنت دون المساس إطلاقاً ببيانات الأطفال والمعلمات والرسوم المسجلة.</p>
-                            </div>
-                        </div>
+
                     </div>
                 </section>
             ` : ""}
@@ -8161,7 +8197,8 @@ function saveChild(data) {
         first_attendance_time: data.first_attendance_time || "",
         custom_age: (data.custom_age || "").trim(),
         subscription_fee: Number(data.subscription_fee) || 0,
-        remaining_balance: Number(data.remaining_balance) || 0
+        remaining_balance: Number(data.remaining_balance) || 0,
+        photo_url: data.photo_url || existing?.photo_url || ""
     };
 
     if (existing) {
@@ -9478,6 +9515,58 @@ async function executeAiChatRequest() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   CHILD PHOTO ATTACHMENT HELPERS
+═══════════════════════════════════════════════════════════════════════════ */
+function handleChildPhotoUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const maxDim = 320;
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+                if (width > maxDim) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                }
+            } else {
+                if (height > maxDim) {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+            
+            const preview = document.getElementById("child-photo-preview");
+            const hidden = document.getElementById("child-photo-url-hidden");
+            if (preview) preview.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; object-fit:cover;">`;
+            if (hidden) hidden.value = dataUrl;
+            showToast("تم تحميل صورة الطفل بنجاح ✓", "success");
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearChildPhoto() {
+    const preview = document.getElementById("child-photo-preview");
+    const hidden = document.getElementById("child-photo-url-hidden");
+    const fileInput = document.getElementById("child-photo-file-input");
+    if (preview) preview.innerHTML = "📷";
+    if (hidden) hidden.value = "";
+    if (fileInput) fileInput.value = "";
+    showToast("تم مسح صورة الطفل");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    SMART WHATSAPP TEMPLATES MODAL
 ═══════════════════════════════════════════════════════════════════════════ */
 function showSmartWhatsappModal(childId) {
@@ -9514,6 +9603,27 @@ function showSmartWhatsappModal(childId) {
         }
     ];
 
+    window.__SMART_WHATSAPP_TEMPLATES = templates;
+    window.__selectSmartWhatsappTemplate = function(idx) {
+        const textarea = document.getElementById("smart-whatsapp-textarea");
+        if (textarea && window.__SMART_WHATSAPP_TEMPLATES && window.__SMART_WHATSAPP_TEMPLATES[idx]) {
+            textarea.value = window.__SMART_WHATSAPP_TEMPLATES[idx].text;
+            
+            const allBtns = document.querySelectorAll(".smart-tpl-btn");
+            allBtns.forEach((b, i) => {
+                if (i === idx) {
+                    b.style.borderColor = "#22c55e";
+                    b.style.background = "rgba(34, 197, 94, 0.12)";
+                    b.style.color = "#16a34a";
+                } else {
+                    b.style.borderColor = "var(--line)";
+                    b.style.background = "transparent";
+                    b.style.color = "var(--ink)";
+                }
+            });
+        }
+    };
+
     const existing = document.getElementById("smart-whatsapp-modal");
     if (existing) existing.remove();
 
@@ -9539,7 +9649,7 @@ function showSmartWhatsappModal(childId) {
                 <label style="font-weight:700; font-size:0.88rem; display:block; margin-bottom:8px;">اختر القالب السريع:</label>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                     ${templates.map((tpl, idx) => `
-                        <button type="button" class="btn btn-ghost" style="text-align:right; justify-content:flex-start; font-weight:700; padding:10px 14px; border-radius:10px; border:1px solid var(--line);" onclick="document.getElementById('smart-whatsapp-textarea').value = ${JSON.stringify(tpl.text)}">
+                        <button type="button" class="btn btn-ghost smart-tpl-btn" style="text-align:right; justify-content:flex-start; font-weight:700; padding:10px 14px; border-radius:10px; border:1px solid ${idx === 0 ? '#22c55e' : 'var(--line)'}; background:${idx === 0 ? 'rgba(34, 197, 94, 0.12)' : 'transparent'}; color:${idx === 0 ? '#16a34a' : 'var(--ink)'}; cursor:pointer;" onclick="window.__selectSmartWhatsappTemplate(${idx})">
                             ${tpl.title}
                         </button>
                     `).join("")}
@@ -9576,6 +9686,9 @@ function printStudentBadge(childId) {
     const parentPhone = getChildWhatsappPhone(child.id);
     const stage = STAGE_LABELS[child.stage] || child.stage;
     const ageVal = child.custom_age || `${calculateAge(child.birth_date)} سنوات`;
+    const photoContent = child.photo_url
+        ? `<img src="${child.photo_url}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
+        : child.full_name.charAt(0);
 
     const printWin = window.open('', '_blank', 'width=800,height=900');
     printWin.document.write(`
@@ -9592,7 +9705,7 @@ function printStudentBadge(childId) {
                 .badge-header h2 { margin: 0; font-size: 1.25rem; font-weight: 900; }
                 .badge-header small { font-size: 0.8rem; opacity: 0.9; }
                 .badge-avatar-wrap { margin-top: -30px; display: flex; justify-content: center; }
-                .badge-avatar { width: 90px; height: 90px; border-radius: 50%; background: #f8fafc; border: 4px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; color: #1e3a8a; }
+                .badge-avatar { width: 92px; height: 92px; border-radius: 50%; background: #f8fafc; border: 4px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; color: #1e3a8a; overflow: hidden; }
                 .badge-body { padding: 12px 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
                 .badge-name { font-size: 1.25rem; font-weight: 900; color: #0f172a; margin: 4px 0; }
                 .badge-stage { display: inline-block; background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.82rem; margin-bottom: 8px; }
@@ -9615,7 +9728,7 @@ function printStudentBadge(childId) {
                     <small>بطاقة تعريف طفل | العام الدراسي 2025 / 2026</small>
                 </div>
                 <div class="badge-avatar-wrap">
-                    <div class="badge-avatar">${child.full_name.charAt(0)}</div>
+                    <div class="badge-avatar">${photoContent}</div>
                 </div>
                 <div class="badge-body">
                     <div class="badge-name">${child.full_name}</div>
