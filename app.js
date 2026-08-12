@@ -2052,10 +2052,81 @@ function renderHomeHub(allowedSections, user, roleLabel) {
             </div>
         </section>
 
-        <!-- SECTIONS GRID -->
-        <section class="hub-sections-modern">
-            ${groupedCards}
-        </section>
+        <!-- INTERACTIVE LIVE OPERATIONS DASHBOARD (WIDGETS ROW) -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap:20px; margin-bottom:24px;">
+            <!-- WIDGET 1: LATEST KIDS & ATTENDANCE -->
+            <div class="panel" style="padding:22px; border-radius:18px; background:var(--paper); border:1px solid var(--line); box-shadow:var(--shadow-md);">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:1.4rem;">👶</span>
+                        <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--ink);">أحدث الأطفال المسجلين</h3>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" type="button" data-nav="children" style="font-weight:700; color:var(--accent);">عرض كل الأطفال ←</button>
+                </div>
+                
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    ${state.children.slice(0, 5).map(child => {
+                        const parentPhone = getChildWhatsappPhone(child.id);
+                        return `
+                            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:12px; background:var(--bg); border:1px solid var(--line);">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.95rem;">
+                                        ${child.full_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <strong style="display:block; color:var(--ink); font-size:0.95rem;">${child.full_name}</strong>
+                                        <small style="color:var(--ink-soft); font-size:0.8rem;">${STAGE_LABELS[child.stage] || child.stage}</small>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <button class="btn btn-whatsapp-pill" type="button" data-action="whatsapp-child" data-id="${child.id}" style="padding:6px 12px; font-size:0.82rem; border-radius:8px; background:#22c55e; color:#fff; border:none; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:4px;">
+                                        <span>💬</span>
+                                        <span>واتساب</span>
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm" type="button" data-nav="children" style="padding:6px 10px; font-size:0.82rem;">ملف</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join("")}
+                </div>
+            </div>
+
+            <!-- WIDGET 2: STAFF & TEACHERS QUICK OVERVIEW -->
+            <div class="panel" style="padding:22px; border-radius:18px; background:var(--paper); border:1px solid var(--line); box-shadow:var(--shadow-md);">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:1.4rem;">👩‍🏫</span>
+                        <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--ink);">فريق العمل والمعلمات</h3>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" type="button" data-nav="staff" style="font-weight:700; color:var(--accent);">إدارة الكادر ←</button>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    ${state.staff.slice(0, 5).map(member => {
+                        const statusBadge = member.contract_status === "TERMINATED" 
+                            ? `<span style="background:rgba(239,68,68,0.1); color:#ef4444; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">ملغي</span>`
+                            : `<span style="background:rgba(16,185,129,0.1); color:#10b981; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">ساري</span>`;
+                        return `
+                            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:12px; background:var(--bg); border:1px solid var(--line);">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg, #8b5cf6, #6d28d9); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.95rem;">
+                                        ${member.full_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <strong style="display:block; color:var(--ink); font-size:0.95rem;">${member.full_name}</strong>
+                                        <small style="color:var(--ink-soft); font-size:0.8rem;">${member.role_title || "معلمة"} · ${formatCurrency(member.salary || 0)}</small>
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    ${statusBadge}
+                                    <button class="btn btn-secondary btn-sm" type="button" data-action="open-staff-salary-modal" data-id="${member.id}" style="padding:6px 10px; font-size:0.82rem; border-radius:8px;">راتب</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join("")}
+                </div>
+            </div>
+        </div>
     `;
 }
 
