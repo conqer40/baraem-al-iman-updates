@@ -1764,63 +1764,109 @@ function renderShell() {
 
     const sectionMeta = isHome
         ? {
-            title: "الأقسام الرئيسية",
-            description: "صفحة رئيسية كاملة تعرض كل الأقسام المسموح بها لهذا الحساب."
+            title: "لوحة التحكم والأقسام الشاملة",
+            description: "نظام إدارة أكاديمية براعم الإيمان — رعاية وبناء الأجيال في بيئة تربوية حديثة."
         }
-        : SECTION_TITLES[ui.activeSection];
+        : (SECTION_TITLES[ui.activeSection] || { title: ui.activeSection, description: "" });
+
+    const sidebarNavGroups = NAV_GROUPS.map(group => {
+        const groupSections = group.sections.filter(s => allowedSections.includes(s));
+        if (!groupSections.length) return "";
+        return `
+            <div class="sidebar-nav-group">
+                <span class="sidebar-group-title">${group.title}</span>
+                <div class="sidebar-group-items">
+                    ${groupSections.map(sec => {
+                        const active = ui.activeSection === sec;
+                        const badge = navBadge(sec);
+                        const icon = NAV_ICONS[sec] || "";
+                        const title = SECTION_TITLES[sec]?.title || sec;
+                        return `
+                            <button type="button" class="sidebar-link ${active ? 'is-active' : ''}" data-nav="${sec}" title="${title}">
+                                <span class="sidebar-link-icon">${icon}</span>
+                                <span class="sidebar-link-text">${title}</span>
+                                ${badge ? `<span class="sidebar-link-badge">${badge}</span>` : ''}
+                            </button>
+                        `;
+                    }).join("")}
+                </div>
+            </div>
+        `;
+    }).join("");
 
     return `
-        <div class="shell shell-single">
-            <main class="shell-main shell-main-single">
-                <header class="topbar">
-                    <div class="topbar-main">
-                        <div class="topbar-brand">
-                            <img src="./logo.png" alt="لوجو براعم الإيمان" class="topbar-logo-img" style="width:48px; height:48px; border-radius:12px; object-fit:contain; box-shadow:0 4px 12px rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.2);">
-                            <div class="topbar-brand-copy">
-                                <div class="eyebrow topbar-eyebrow">${isHome ? "أكاديمية براعم الإيمان" : (navHint(ui.activeSection) || "القسم الحالي")}</div>
-                                <div class="title-block">
-                                    <h2>${sectionMeta.title}</h2>
-                                    <p>${sectionMeta.description}</p>
-                                </div>
-                            </div>
+        <div class="shell shell-modern">
+            <!-- LUXURY PERMANENT SIDEBAR -->
+            <aside class="shell-sidebar luxury-sidebar">
+                <div class="sidebar-brand-card">
+                    <img src="./logo.png" alt="شعار براعم الإيمان" class="sidebar-logo-img">
+                    <div class="sidebar-brand-text">
+                        <h3>${BRAND.shortName}</h3>
+                        <small>نظام الإدارة الذكي</small>
+                    </div>
+                </div>
+
+                <div class="sidebar-quick-home">
+                    <button type="button" class="sidebar-home-btn ${isHome ? 'is-active' : ''}" data-action="go-home">
+                        <span style="font-size:1.2rem;">🏠</span>
+                        <strong>الرئيسية الشاملة</strong>
+                    </button>
+                </div>
+
+                <nav class="sidebar-nav-scroll">
+                    ${sidebarNavGroups}
+                </nav>
+
+                <div class="sidebar-user-footer">
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-user-avatar">${(user.full_name || "م").charAt(0)}</div>
+                        <div class="sidebar-user-details">
+                            <strong>${user.full_name || "المستخدم"}</strong>
+                            <small>${roleLabel}</small>
                         </div>
                     </div>
+                    <button class="btn btn-ghost btn-sm btn-logout" type="button" data-action="logout" title="تسجيل الخروج">🚪</button>
+                </div>
+            </aside>
+
+            <!-- MAIN WORKSPACE -->
+            <main class="shell-main luxury-main">
+                <header class="topbar luxury-topbar">
+                    <div class="topbar-main">
+                        <div class="title-block">
+                            <h2>${sectionMeta.title}</h2>
+                            <p>${sectionMeta.description}</p>
+                        </div>
+                    </div>
+
                     <div class="topbar-side">
-                        ${!isHome ? `
-                            <button class="btn btn-secondary" type="button" data-action="go-home">🏠 الرئيسية</button>
-                        ` : ""}
-                        
-                        <button class="btn btn-ghost theme-toggle-btn" type="button" data-action="toggle-theme" title="تبديل الوضع الليلي / النهاري" style="font-size:1.15rem; padding:8px 14px; border-radius:10px;">
+                        <button class="btn btn-ghost theme-toggle-btn" type="button" data-action="toggle-theme" title="تبديل الوضع الليلي / النهاري">
                             ${document.body.classList.contains("dark-theme") ? "☀️ نهاري" : "🌙 ليلي"}
                         </button>
 
-                        <button class="btn btn-primary btn-update-app" type="button" data-action="go-updates" title="فتح قسم تحديث البرنامج والدعم الفني" style="font-weight:700;">🔄 تحديث البرنامج</button>
-                        
+                        <button class="btn btn-primary btn-update-app" type="button" data-action="go-updates" title="مركز التحديث والدعم">
+                            🔄 التحديثات
+                        </button>
+
                         <button class="btn btn-ghost tour-launch" type="button" data-action="start-tour" title="جولة تعريفية">
                             <span aria-hidden="true">?</span>
                             <span>جولة سريعة</span>
                         </button>
-                        
-                        <button class="btn btn-secondary" type="button" data-action="logout" style="color:var(--danger);">خروج</button>
-                        
-                        <div class="info-chip">
+
+                        <div class="info-chip date-chip">
                             <span>التاريخ</span>
                             <strong>${formatArabicDate(todayDate())}</strong>
                         </div>
-                        <div class="info-chip">
-                            <span>الدور</span>
-                            <strong>${roleLabel}</strong>
-                        </div>
-                        <div class="info-chip accent-chip">
-                            <span>الجهة</span>
-                            <strong>${BRAND.shortName}</strong>
-                        </div>
-                        ${cloudDb ? `<span id="cloud-sync-badge" class="cloud-badge cloud-${ui.cloudStatus}" title="${ui.cloudSyncTime ? "آخر مزامنة: " + ui.cloudSyncTime : "مزامنة سحابية"}">
-                            ${ui.cloudStatus === "synced" ? "☁ محفوظ" : ui.cloudStatus === "syncing" ? "↻ جارٍ..." : ui.cloudStatus === "error" ? "✕ خطأ" : "☁ سحابة"}
-                        </span>` : ""}
+
+                        ${cloudDb ? `
+                            <span id="cloud-sync-badge" class="cloud-badge cloud-${ui.cloudStatus}" title="${ui.cloudSyncTime ? "آخر مزامنة: " + ui.cloudSyncTime : "مزامنة سحابية"}">
+                                ${ui.cloudStatus === "synced" ? "☁ محفوظ" : ui.cloudStatus === "syncing" ? "↻ جارٍ..." : ui.cloudStatus === "error" ? "✕ خطأ" : "☁ سحابة"}
+                            </span>
+                        ` : ""}
                     </div>
                 </header>
-                <section class="workspace">
+
+                <section class="workspace luxury-workspace">
                     ${isHome ? renderHomeHub(allowedSections, user, roleLabel) : renderSection(ui.activeSection)}
                 </section>
             </main>
