@@ -1717,36 +1717,98 @@ function renderHomeHub(allowedSections, user, roleLabel) {
         : "";
 
     return `
-        <section class="hub-hero">
-            <div class="hub-hero-main">
-                <div class="eyebrow">بوابة الأقسام</div>
-                <h2>${BRAND.name}</h2>
-                <p>اختر القسم الذي تريد العمل عليه من الصفحة الرئيسية. كل قسم يفتح في شاشة مستقلة وبها زر يعيدك إلى هذه الصفحة في أي وقت.</p>
-                <div class="hub-metrics">
-                    ${homeMetrics.map((item, index) => `
-                        <article class="hub-metric ${item.tone ? `hub-metric-${item.tone}` : ""}" style="--metric-index:${index};">
-                            <span>${item.label}</span>
-                            <strong>${item.value}</strong>
-                            <small>${item.hint}</small>
-                        </article>
-                    `).join("")}
+        <!-- EXECUTIVE WELCOME HERO -->
+        <section class="dashboard-hero-banner">
+            <div class="hero-banner-content">
+                <div class="hero-banner-badge">✨ نظام إدارة الحضانة الذكي المطور 2026</div>
+                <h2>أهلاً بك في لوحة تحكم ${BRAND.name}</h2>
+                <p>منظومة متكاملة لإدارة شؤون الأطفال، تسجيل الحضور والانصراف، كشوف الرواتب والمرتبات، والتحصيل المالي والتواصل الفوري.</p>
+                
+                <!-- Quick Power Actions Bar -->
+                <div class="hero-quick-actions">
+                    <button class="btn btn-primary btn-action-pill" type="button" data-nav="add_child">
+                        <span>➕</span>
+                        <span>تسجيل طفل جديد</span>
+                    </button>
+                    <button class="btn btn-success btn-action-pill" type="button" data-nav="attendance" style="background:#059669; color:#fff; border-color:#10b981;">
+                        <span>📅</span>
+                        <span>حضور وانصراف اليوم</span>
+                    </button>
+                    <button class="btn btn-warning btn-action-pill" type="button" data-nav="finance" style="background:#d97706; color:#fff; border-color:#f59e0b;">
+                        <span>💰</span>
+                        <span>الرسوم والاشتراكات</span>
+                    </button>
+                    <button class="btn btn-secondary btn-action-pill" type="button" data-nav="payroll">
+                        <span>💵</span>
+                        <span>كشوف الرواتب</span>
+                    </button>
+                    <button class="btn btn-whatsapp-pill" type="button" data-nav="whatsapp" style="background:#22c55e; color:#fff; border-radius:10px; font-weight:700; display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border:none; cursor:pointer;">
+                        <span>💬</span>
+                        <span>رسائل واتساب</span>
+                    </button>
+                    <button class="btn btn-ghost btn-action-pill" type="button" data-action="go-updates">
+                        <span>🔄</span>
+                        <span>فحص التحديثات</span>
+                    </button>
                 </div>
-            </div>
-            <div class="hub-hero-side">
-                <div class="hub-user-card">
-                    <span>المستخدم الحالي</span>
-                    <strong>${user.full_name}</strong>
-                    <small>${roleLabel}</small>
-                </div>
-                <div class="hub-user-card">
-                    <span>تاريخ اليوم</span>
-                    <strong>${formatArabicDate(todayDate())}</strong>
-                    <small>${allowedSections.length} أقسام متاحة</small>
-                </div>
-                ${adminAccessCard}
             </div>
         </section>
-        <section class="hub-sections">
+
+        <!-- 4 EXECUTIVE METRICS CARDS -->
+        <section class="executive-metrics-grid">
+            <div class="executive-metric-card metric-kids" data-nav="children" style="cursor:pointer;" title="انقر لعرض الأطفال">
+                <div class="metric-card-header">
+                    <div class="metric-icon-box" style="background:rgba(37,99,235,0.12); color:#2563eb; font-size:1.8rem;">👶</div>
+                    <span class="metric-trend-badge" style="background:rgba(37,99,235,0.1); color:#2563eb;">نشط ومسجل</span>
+                </div>
+                <div class="metric-card-body">
+                    <span class="metric-title">الأطفال المقيدون</span>
+                    <strong class="metric-number">${dashboard.activeChildren} <small style="font-size:0.9rem; font-weight:500;">طفل</small></strong>
+                    <p class="metric-hint">✓ ملفات الأطفال المفعلة داخل الأكاديمية</p>
+                </div>
+            </div>
+
+            <div class="executive-metric-card metric-attendance" data-nav="attendance" style="cursor:pointer;" title="انقر لفتح الحضور">
+                <div class="metric-card-header">
+                    <div class="metric-icon-box" style="background:rgba(16,185,129,0.12); color:#10b981; font-size:1.8rem;">📅</div>
+                    <span class="metric-trend-badge" style="background:rgba(16,185,129,0.1); color:#10b981;">اليوم ${formatArabicDate(todayDate())}</span>
+                </div>
+                <div class="metric-card-body">
+                    <span class="metric-title">حضور اليوم المباشر</span>
+                    <strong class="metric-number">${dashboard.presentToday} <small style="font-size:0.9rem; font-weight:500;">حاضر</small></strong>
+                    <p class="metric-hint">من إجمالي ${dashboard.activeChildren} طفل مقيد</p>
+                </div>
+            </div>
+
+            <div class="executive-metric-card metric-staff" data-nav="staff" style="cursor:pointer;" title="انقر لفتح الموظفين والرواتب">
+                <div class="metric-card-header">
+                    <div class="metric-icon-box" style="background:rgba(139,92,246,0.12); color:#8b5cf6; font-size:1.8rem;">👩‍🏫</div>
+                    <span class="metric-trend-badge" style="background:rgba(139,92,246,0.1); color:#8b5cf6;">مواعيد 8:00 - 14:00</span>
+                </div>
+                <div class="metric-card-body">
+                    <span class="metric-title">المعلمات والموظفون</span>
+                    <strong class="metric-number">${state.staff.length} <small style="font-size:0.9rem; font-weight:500;">كادر</small></strong>
+                    <p class="metric-hint">✓ تعديل الرواتب وإلغاء التعاقد مفعل</p>
+                </div>
+            </div>
+
+            <div class="executive-metric-card metric-finance" data-nav="finance" style="cursor:pointer;" title="انقر لفتح الحسابات">
+                <div class="metric-card-header">
+                    <div class="metric-icon-box" style="background:rgba(245,158,11,0.12); color:#f59e0b; font-size:1.8rem;">💰</div>
+                    <span class="metric-trend-badge" style="background:${overdueCount ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'}; color:${overdueCount ? '#ef4444' : '#10b981'};">
+                        ${overdueCount ? `${overdueCount} متأخرة` : 'منتظم'}
+                    </span>
+                </div>
+                <div class="metric-card-body">
+                    <span class="metric-title">متابعة الرسوم والاشتراكات</span>
+                    <strong class="metric-number">${overdueCount ? overdueCount + ' متأخرات' : 'مستقرة'}</strong>
+                    <p class="metric-hint">${overdueCount ? 'تحتاج متابعة مع أولياء الأمور' : 'تم سداد جميع الرسوم المستحقة'}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTIONS GRID -->
+        <section class="hub-sections-modern">
             ${groupedCards}
         </section>
     `;
