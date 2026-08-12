@@ -7824,9 +7824,10 @@ async function performAppUpdate() {
                     setTimeout(() => {
                         try {
                             ipcRenderer.invoke('app:reload');
-                        } catch (_) {}
-                        window.location.href = window.location.pathname + '?t=' + Date.now();
-                    }, 1200);
+                        } catch (_) {
+                            window.location.reload();
+                        }
+                    }, 1000);
                 } else {
                     showToast("لم يتم العثور على ملفات جديدة في رابط التحديث أو تعذر الاتصال بالسيرفر.", "error");
                 }
