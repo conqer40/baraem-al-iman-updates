@@ -8183,18 +8183,56 @@ function showToast(message, type = "success") {
     }, 3200);
 }
 
-function showConfirm(message, onConfirm) {
+function showConfirm(message, onConfirm, options = {}) {
+    let confirmText = options.confirmText;
+    let confirmType = options.confirmType;
+    let iconSvg = options.iconSvg;
+
+    if (!confirmText) {
+        if (message.includes("إرسال") || message.includes("واتساب") || message.includes("رسالة")) {
+            confirmText = "تأكيد الإرسال 💬";
+            confirmType = "btn-success";
+            iconSvg = `<div style="font-size:2.4rem; color:#22c55e;">💬</div>`;
+        } else if (message.includes("تفعيل")) {
+            confirmText = "تأكيد التفعيل ✅";
+            confirmType = "btn-success";
+            iconSvg = `<div style="font-size:2.4rem; color:#10b981;">✅</div>`;
+        } else if (message.includes("إنهاء") || message.includes("إلغاء") || message.includes("تعاقد")) {
+            confirmText = "تأكيد إلغاء التعاقد";
+            confirmType = "btn-danger";
+            iconSvg = `<div style="font-size:2.4rem; color:#ef4444;">⚠️</div>`;
+        } else if (message.includes("استبدال") || message.includes("استيراد")) {
+            confirmText = "تأكيد الاستيراد";
+            confirmType = "btn-warning";
+            iconSvg = `<div style="font-size:2.4rem; color:#f59e0b;">📥</div>`;
+        } else if (message.includes("حذف")) {
+            confirmText = "تأكيد الحذف";
+            confirmType = "btn-danger";
+            iconSvg = `<div style="font-size:2.4rem; color:#ef4444;">🗑️</div>`;
+        } else {
+            confirmText = "تأكيد ومتابعة";
+            confirmType = "btn-primary";
+            iconSvg = `<div style="font-size:2.4rem; color:#3b82f6;">ℹ️</div>`;
+        }
+    } else if (!confirmType) {
+        confirmType = "btn-primary";
+    }
+
+    if (!iconSvg) {
+        iconSvg = `<div style="font-size:2.4rem; color:#3b82f6;">ℹ️</div>`;
+    }
+
     const overlay = document.createElement("div");
     overlay.className = "modal-overlay";
     overlay.innerHTML = `
-        <div class="modal-box">
-            <div class="modal-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div class="modal-box" style="text-align:center; padding:24px; border-radius:18px;">
+            <div class="modal-icon" style="margin-bottom:12px;">
+                ${iconSvg}
             </div>
-            <p class="modal-message">${message}</p>
-            <div class="modal-actions">
-                <button class="btn btn-danger" id="modal-confirm">تأكيد الحذف</button>
-                <button class="btn btn-secondary" id="modal-cancel">إلغاء</button>
+            <p class="modal-message" style="font-size:1.05rem; font-weight:600; line-height:1.7; color:var(--ink); margin-bottom:22px;">${message}</p>
+            <div class="modal-actions" style="display:flex; gap:12px; justify-content:center;">
+                <button class="btn ${confirmType}" id="modal-confirm" style="padding:10px 22px; font-weight:700;">${confirmText}</button>
+                <button class="btn btn-secondary" id="modal-cancel" style="padding:10px 20px; font-weight:600;">إلغاء</button>
             </div>
         </div>
     `;
