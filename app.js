@@ -599,10 +599,18 @@ async function checkStartupUpdateNotification() {
         const manifestUrl = `${updateUrl.replace(/\/+$/, '')}/version.json?t=${Date.now()}`;
         
         const response = await fetch(manifestUrl, { cache: "no-store" });
-        if (!response.ok) return;
+        if (!response.ok) {
+            checkWhatsNewOnFirstOpen();
+            return;
+        }
         
         const data = await response.json();
-        if (!data || !data.version) return;
+        if (!data || !data.version) {
+            checkWhatsNewOnFirstOpen();
+            return;
+        }
+
+        const dismissedVersion = sessionStorage.getItem("BARAEM_DISMISSED_UPDATE");
 
         // Trigger update notification if remote version is newer/different
         if (data.version !== CURRENT_APP_VERSION && dismissedVersion !== data.version) {
@@ -611,10 +619,124 @@ async function checkStartupUpdateNotification() {
             }, 800);
         } else {
             console.log(`[✓] النظام محدث بالكامل للإصدار (${CURRENT_APP_VERSION})`);
+            checkWhatsNewOnFirstOpen();
         }
     } catch (e) {
         console.debug("Startup update check skipped:", e.message);
+        checkWhatsNewOnFirstOpen();
     }
+}
+
+function checkWhatsNewOnFirstOpen() {
+    const lastSeen = localStorage.getItem("BARAEM_LAST_SEEN_UPDATE_VERSION");
+    if (lastSeen !== CURRENT_APP_VERSION) {
+        setTimeout(() => {
+            showWhatsNewWelcomeModal();
+        }, 1000);
+    }
+}
+
+function showWhatsNewWelcomeModal() {
+    const existing = document.getElementById("whats-new-modal");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "whats-new-modal";
+    overlay.className = "modal-overlay modal-visible";
+    overlay.style.zIndex = "999999";
+
+    overlay.innerHTML = `
+        <div class="modal-box" style="max-width:620px; width:92%; text-align:right; border-radius:24px; padding:30px; background:linear-gradient(145deg, #0f172a, #1e293b); color:#f8fafc; border:1px solid rgba(255,255,255,0.15); box-shadow:0 30px 70px rgba(0,0,0,0.7); position:relative; overflow:hidden;">
+            <div style="position:absolute; top:-40px; left:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(16,185,129,0.3), transparent 70%); border-radius:50%; pointer-events:none;"></div>
+            
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:16px;">
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:58px; height:58px; border-radius:18px; background:linear-gradient(135deg, #10b981, #059669); display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 8px 24px rgba(16,185,129,0.4); flex-shrink:0;">
+                        🎉
+                    </div>
+                    <div>
+                        <span style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.8rem; font-weight:800; padding:4px 12px; border-radius:12px; border:1px solid rgba(16,185,129,0.3);">تم تثبيت التحديث بنجاح v${CURRENT_APP_VERSION}</span>
+                        <h3 style="margin:4px 0 0 0; font-size:1.35rem; font-weight:900; color:#ffffff;">مرحباً بك في الإصدار الجديد! 🌟</h3>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-close-whats-new-x" style="font-size:1.3rem; padding:4px 12px; color:#94a3b8; border-radius:10px;">✕</button>
+            </div>
+
+            <p style="color:#cbd5e1; font-size:0.95rem; line-height:1.7; margin-bottom:18px;">
+                يسعدنا إعلامك بأنه تم تفعيل باقة من الميزات والتحسينات الذكية الجديدة لتسهيل إدارة الأكاديمية:
+            </p>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px; margin-bottom:24px;">
+                
+                <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; display:flex; align-items:flex-start; gap:10px;">
+                    <span style="font-size:1.4rem;">📸</span>
+                    <div>
+                        <strong style="color:#60a5fa; font-size:0.88rem; display:block;">إرفاق صور الأطفال</strong>
+                        <small style="color:#94a3b8; font-size:0.8rem; line-height:1.4; display:block;">رفع صورة الطفل وضغطها لتظهر تلقائياً في الكارنيه والملف.</small>
+                    </div>
+                </div>
+
+                <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; display:flex; align-items:flex-start; gap:10px;">
+                    <span style="font-size:1.4rem;">🪪</span>
+                    <div>
+                        <strong style="color:#34d399; font-size:0.88rem; display:block;">كارنيهات وبادجات هوية</strong>
+                        <small style="color:#94a3b8; font-size:0.8rem; line-height:1.4; display:block;">طباعة بطاقة هوية رسمية ذكية مع صورة الطفل ورمز QR.</small>
+                    </div>
+                </div>
+
+                <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; display:flex; align-items:flex-start; gap:10px;">
+                    <span style="font-size:1.4rem;">🎓</span>
+                    <div>
+                        <strong style="color:#f59e0b; font-size:0.88rem; display:block;">شهادات تقدير وتكريم A4</strong>
+                        <small style="color:#94a3b8; font-size:0.8rem; line-height:1.4; display:block;">شهادات فاخرة لحفظ القرآن، السلوك الإيجابي، والتفوق.</small>
+                    </div>
+                </div>
+
+                <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; display:flex; align-items:flex-start; gap:10px;">
+                    <span style="font-size:1.4rem;">💬</span>
+                    <div>
+                        <strong style="color:#a855f7; font-size:0.88rem; display:block;">رسائل واتساب الذكية</strong>
+                        <small style="color:#94a3b8; font-size:0.8rem; line-height:1.4; display:block;">إشعار وصول آمن، انصراف، تذكير مصروفات، وبطاقة تشجيع.</small>
+                    </div>
+                </div>
+
+                <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; display:flex; align-items:flex-start; gap:10px;">
+                    <span style="font-size:1.4rem;">🔍</span>
+                    <div>
+                        <strong style="color:#38bdf8; font-size:0.88rem; display:block;">البحث الشامل السريع</strong>
+                        <small style="color:#94a3b8; font-size:0.8rem; line-height:1.4; display:block;">بحث فوري بالاسم أو الهاتف في الشريط العلوي للشاشة.</small>
+                    </div>
+                </div>
+
+                <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 14px; display:flex; align-items:flex-start; gap:10px;">
+                    <span style="font-size:1.4rem;">📑</span>
+                    <div>
+                        <strong style="color:#fb7185; font-size:0.88rem; display:block;">كشف حساب مالي وتنبيهات صحية</strong>
+                        <small style="color:#94a3b8; font-size:0.8rem; line-height:1.4; display:block;">كشف حساب رسمي معتمد لولي الأمر وتنبيهات الحالات الخاصة.</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <small style="color:#94a3b8; font-weight:600;">لن تظهر هذه الرسالة مرة أخرى لهذا الإصدار ✓</small>
+                <button type="button" class="btn btn-primary" id="btn-close-whats-new" style="padding:12px 28px; font-weight:800; font-size:0.98rem; border-radius:14px; background:linear-gradient(135deg, #10b981, #059669); box-shadow:0 6px 20px rgba(16,185,129,0.4); border:none; cursor:pointer;">
+                    <span>🚀 بدء استخدام الميزات الجديدة</span>
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    function dismissModal() {
+        localStorage.setItem("BARAEM_LAST_SEEN_UPDATE_VERSION", CURRENT_APP_VERSION);
+        overlay.classList.remove("modal-visible");
+        setTimeout(() => overlay.remove(), 250);
+    }
+
+    document.getElementById("btn-close-whats-new")?.addEventListener("click", dismissModal);
+    document.getElementById("btn-close-whats-new-x")?.addEventListener("click", dismissModal);
 }
 
 function showStartupUpdateModal(updateInfo) {
