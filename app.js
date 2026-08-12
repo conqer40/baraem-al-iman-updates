@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.1.0";
+const CURRENT_APP_VERSION = "5.2.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -632,15 +632,25 @@ async function checkStartupUpdateNotification() {
 ═══════════════════════════════════════════════════════════════════════════ */
 const APP_RELEASES_REGISTRY = [
     {
+        version: "5.2.0",
+        date: "2026-08-13",
+        badge: "🎂 الإصدار v5.2.0 (الأحدث)",
+        title: "ويدجت أعياد الميلاد والاحتفالات وبطاقات التهنئة المطبوعة",
+        items: [
+            { icon: "🎂", title: "ويدجت أعياد ميلاد الأسبوع", desc: "تنبيه تلقائي ذكي بأعياد ميلاد أطفال الأكاديمية خلال الـ 7 أيام القادمة." },
+            { icon: "💬", title: "تهنئة واتساب فورية", desc: "إرسال رسالة تهنئة ومباركة مخصصة باسم الطفل وعمره لولي الأمر بنقرة زر." },
+            { icon: "🖨️", title: "طباعة بطاقات تهنئة فاخرة A4", desc: "طباعة بطاقة تهنئة واحتفال كرتونية مبهجة مدمجة بصورة الطفل واسمه." }
+        ]
+    },
+    {
         version: "5.1.0",
         date: "2026-08-13",
-        badge: "🌟 الإصدار v5.1.0 (الأحدث)",
+        badge: "🌟 الإصدار v5.1.0",
         title: "إرفاق صور الأطفال، الكارنيهات والبادجات، وتنشيط قوالب الواتساب",
         items: [
             { icon: "📸", title: "إرفاق صورة الطفل الشخصية", desc: "رفع صورة الطفل من الجهاز وضغطها تلقائياً لتناسب قواعد البيانات." },
             { icon: "🪪", title: "كارنيهات وبادجات هوية ذكية", desc: "طباعة بطاقة هوية رسمية لكل طفل مدمجة بصورته الشخصية ورمز QR." },
-            { icon: "💬", title: "تنشيط قوالب الواتساب الفورية", desc: "التبديل اللحظي بنقرة زر بين قوالب رسائل الواتساب مع تمييز القالب المختار." },
-            { icon: "📋", title: "سجل التحديثات التفاعلي الشامل", desc: "سجل تاريخي كامل بجميع ميزات وتفاصيل كل إصدار في مركز التحديثات." }
+            { icon: "💬", title: "تنشيط قوالب الواتساب الفورية", desc: "التبديل اللحظي بنقرة زر بين قوالب رسائل الواتساب مع تمييز القالب المختار." }
         ]
     },
     {
@@ -2033,6 +2043,7 @@ function renderLogin() {
 function renderHomeHub(allowedSections, user, roleLabel) {
     const dashboard = getDashboardMetrics();
     const overdueCount = getOverdueFees().length;
+    const upcomingBirthdays = getUpcomingBirthdays(7);
     const homeMetrics = [
         {
             label: "الأطفال النشطون",
@@ -2255,6 +2266,65 @@ function renderHomeHub(allowedSections, user, roleLabel) {
                     `;
                 }).join("")}
             </div>
+        <!-- WIDGET: BIRTHDAYS & CELEBRATIONS OF THE WEEK -->
+        <section class="panel birthdays-widget-panel" style="margin-bottom:24px; padding:22px; border-radius:20px; background:linear-gradient(135deg, rgba(244,63,94,0.06), rgba(245,158,11,0.06)); border:1px solid rgba(244,63,94,0.25); box-shadow:var(--shadow-md);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg, #f43f5e, #fb7185); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.4rem; box-shadow:0 4px 12px rgba(244,63,94,0.3);">
+                        🎂
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:var(--ink);">مناسبات وأعياد ميلاد هذا الأسبوع 🎈</h3>
+                        <small style="color:var(--ink-soft); font-weight:600;">تنبيهات أعياد ميلاد أطفال الأكاديمية خلال الـ 7 أيام القادمة</small>
+                    </div>
+                </div>
+                <span class="badge" style="background:${upcomingBirthdays.length ? '#f43f5e' : '#10b981'}; color:#fff; font-weight:800; padding:4px 12px; border-radius:12px;">
+                    ${upcomingBirthdays.length ? `${upcomingBirthdays.length} مناسبات قادمة` : "لا توجد مناسبات قريبة"}
+                </span>
+            </div>
+
+            ${upcomingBirthdays.length ? `
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:14px;">
+                    ${upcomingBirthdays.map(b => {
+                        const parentPhone = getChildWhatsappPhone(b.child.id);
+                        const isToday = b.isToday;
+                        return `
+                            <div style="border-radius:14px; padding:14px 16px; background:var(--paper); border:1px solid ${isToday ? '#f43f5e' : 'var(--line)'}; box-shadow:${isToday ? '0 4px 14px rgba(244,63,94,0.2)' : 'var(--shadow-sm)'}; display:flex; align-items:center; justify-content:space-between; gap:12px; position:relative; overflow:hidden;">
+                                ${isToday ? `<div style="position:absolute; top:0; left:0; background:#f43f5e; color:#fff; font-size:0.68rem; font-weight:900; padding:2px 10px; border-bottom-right-radius:10px;">🎉 اليوم!</div>` : ""}
+                                
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, #f43f5e, #fb923c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem; font-weight:800; overflow:hidden; flex-shrink:0; border:2px solid #fff; box-shadow:0 3px 8px rgba(0,0,0,0.1);">
+                                        ${b.child.photo_url ? `<img src="${b.child.photo_url}" style="width:100%; height:100%; object-fit:cover;">` : b.child.full_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <strong style="display:block; color:var(--ink); font-size:0.96rem; margin-bottom:2px;">${b.child.full_name}</strong>
+                                        <div style="display:flex; align-items:center; gap:6px;">
+                                            <span style="background:rgba(244,63,94,0.1); color:#f43f5e; font-size:0.75rem; font-weight:800; padding:2px 8px; border-radius:6px;">
+                                                يتم ${b.turningAge} سنوات 🎈
+                                            </span>
+                                            <small style="color:var(--ink-soft); font-size:0.78rem;">(${b.diffDays === 0 ? "اليوم" : b.diffDays === 1 ? "غداً" : `بعد ${b.diffDays} أيام`})</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <button type="button" class="btn btn-whatsapp-pill" onclick="sendBirthdayWhatsapp('${b.child.id}', ${b.turningAge})" style="padding:6px 10px; font-size:0.8rem; background:#22c55e; color:#fff; border-radius:8px; border:none; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:4px;" title="إرسال تهنئة واتساب لولي الأمر">
+                                        <span>💬</span>
+                                        <span>تهنئة</span>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="printBirthdayCard('${b.child.id}', ${b.turningAge})" style="padding:6px 8px; font-size:0.8rem; border-radius:8px;" title="طباعة كارت تهنئة فاخر">
+                                        <span>🖨️ كارت</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join("")}
+                </div>
+            ` : `
+                <div style="text-align:center; padding:18px; color:var(--ink-soft); font-weight:600; font-size:0.92rem;">
+                    🌸 لا توجد أعياد ميلاد خلال الـ 7 أيام القادمة. جميع أطفال الأكاديمية في رعاية الله وحفظه!
+                </div>
+            `}
         </section>
 
         <!-- INTERACTIVE LIVE OPERATIONS DASHBOARD (WIDGETS ROW) -->
@@ -10148,6 +10218,138 @@ function printChildStatement(childId) {
             <div style="margin-top:40px; display:flex; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:20px;">
                 <div>توقيع المحاسب / الإدارة: ....................</div>
                 <div>ختم الأكاديمية: ....................</div>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UPCOMING BIRTHDAYS & CELEBRATIONS ENGINE
+═══════════════════════════════════════════════════════════════════════════ */
+function getUpcomingBirthdays(daysAhead = 7) {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentDay = today.getDate();
+    
+    const results = [];
+    
+    (state.children || []).forEach(child => {
+        if (!child.birth_date || child.status === "WITHDRAWN") return;
+        const bdate = new Date(child.birth_date);
+        if (isNaN(bdate.getTime())) return;
+        
+        const bMonth = bdate.getMonth();
+        const bDay = bdate.getDate();
+        
+        let bYear = today.getFullYear();
+        let targetBirthday = new Date(bYear, bMonth, bDay);
+        
+        if (targetBirthday < new Date(bYear, currentMonth, currentDay)) {
+            targetBirthday = new Date(bYear + 1, bMonth, bDay);
+        }
+        
+        const diffTime = targetBirthday.getTime() - new Date(today.getFullYear(), currentMonth, currentDay).getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays >= 0 && diffDays <= daysAhead) {
+            const turningAge = targetBirthday.getFullYear() - bdate.getFullYear();
+            results.push({
+                child,
+                diffDays,
+                turningAge: turningAge || 5,
+                isToday: diffDays === 0,
+                isTomorrow: diffDays === 1,
+                birthdayDateStr: `${bDay}/${bMonth + 1}`
+            });
+        }
+    });
+    
+    return results.sort((a, b) => a.diffDays - b.diffDays);
+}
+
+function sendBirthdayWhatsapp(childId, turningAge) {
+    const child = getChildById(childId);
+    if (!child) return;
+    const parentPhone = getChildWhatsappPhone(child.id);
+    if (!parentPhone) {
+        showToast("لا يوجد رقم هاتف مسجل لولي الأمر", "error");
+        return;
+    }
+    const message = `السلام عليكم ورحمة الله وبركاته،\nأولياء أمورنا الكرام، تتقدم إدارة ومعلمات ${BRAND.name} بأجمل التهاني وأطيب الأمنيات بمناسبة يوم ميلاد بطلنا الحبيب (${child.full_name}) وإتمامه (${turningAge} أعوام) اليوم 🎂🎈\nسائلين الله العلي القدير أن يبارك في عمره وينبته نباتاً حسناً ويجعله قرة عين لكم وذخراً للإسلام والمسلمين 🌸✨\n- إدارة ${BRAND.name}`;
+    openWhatsapp(parentPhone, message);
+}
+
+function printBirthdayCard(childId, turningAge) {
+    const child = getChildById(childId);
+    if (!child) return;
+    const stage = STAGE_LABELS[child.stage] || child.stage;
+    const photoContent = child.photo_url
+        ? `<img src="${child.photo_url}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`
+        : child.full_name.charAt(0);
+
+    const printWin = window.open('', '_blank', 'width=1050,height=750');
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>بطاقة تهنئة عيد ميلاد | ${child.full_name}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: 'Cairo', sans-serif; background: #fff5f7; margin: 0; padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 90vh; }
+                .card-container { width: 900px; height: 580px; background: linear-gradient(135deg, #ffffff, #fff1f2); border: 8px double #f43f5e; border-radius: 30px; padding: 30px 40px; box-shadow: 0 15px 35px rgba(244,63,94,0.2); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; text-align: center; }
+                .corner-decor { position: absolute; font-size: 2.5rem; }
+                .top-left { top: 15px; left: 20px; }
+                .top-right { top: 15px; right: 20px; }
+                .bottom-left { bottom: 15px; left: 20px; }
+                .bottom-right { bottom: 15px; right: 20px; }
+                .header-logo { font-size: 1.15rem; font-weight: 800; color: #9f1239; }
+                .main-title { font-size: 2.2rem; font-weight: 900; color: #e11d48; margin: 6px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.05); }
+                .avatar-box { width: 105px; height: 105px; border-radius: 50%; background: linear-gradient(135deg, #f43f5e, #fb923c); color: #fff; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; font-weight: 900; border: 4px solid #fff; box-shadow: 0 8px 20px rgba(244,63,94,0.35); overflow: hidden; }
+                .child-name { font-size: 1.8rem; font-weight: 900; color: #1e293b; margin: 8px 0 4px 0; }
+                .age-badge { display: inline-block; background: linear-gradient(135deg, #f43f5e, #e11d48); color: #fff; padding: 4px 20px; border-radius: 20px; font-size: 1.1rem; font-weight: 800; box-shadow: 0 4px 12px rgba(244,63,94,0.3); }
+                .wishes-text { font-size: 1.15rem; color: #475569; line-height: 1.7; max-width: 720px; margin: 10px auto; font-weight: 600; }
+                .signatures { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 0 40px; font-weight: 700; color: #64748b; font-size: 0.95rem; }
+                @media print { body { background: #fff; padding: 0; } .no-print { display: none; } .card-container { box-shadow: none; border-color: #f43f5e; page-break-inside: avoid; } }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="margin-bottom: 20px; display: flex; gap: 12px;">
+                <button onclick="window.print()" style="padding: 10px 28px; background: #e11d48; color: #fff; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 1.05rem; font-family: inherit;">🖨️ طباعة بطاقة التهنئة الآن</button>
+                <button onclick="window.close()" style="padding: 10px 20px; background: #64748b; color: #fff; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 1.05rem; font-family: inherit;">إغلاق</button>
+            </div>
+            
+            <div class="card-container">
+                <span class="corner-decor top-left">🎈</span>
+                <span class="corner-decor top-right">🎂</span>
+                <span class="corner-decor bottom-left">🎁</span>
+                <span class="corner-decor bottom-right">✨</span>
+
+                <div class="header-logo">
+                    👑 ${BRAND.name} · بطاقة تهنئة رسمية 👑
+                </div>
+
+                <div class="main-title">🎉 عيد ميلاد سعيد يا بطلنا الغالي 🎉</div>
+
+                <div class="avatar-box">
+                    ${photoContent}
+                </div>
+
+                <div>
+                    <div class="child-name">${child.full_name}</div>
+                    <div class="age-badge">أتمَّ اليوم ${turningAge || 5} سنوات بالصحة والعافية 🎈</div>
+                </div>
+
+                <div class="wishes-text">
+                    تتقدم أسرة ومعلمات <strong>${BRAND.name}</strong> بأصدق مشاعر الفرح والتهاني لبطلنا الصغير،<br>
+                    سائلين المولى عز وجل أن يبارك في عمره، وينبته نباتاً حسناً، ويجعله قرة عين لوالديه ذخراً للإسلام والمسلمين 🌸
+                </div>
+
+                <div class="signatures">
+                    <div>معلمات فصل: ${stage} 🌸</div>
+                    <div>إدارة الأكاديمية: .................... ✍️</div>
+                </div>
             </div>
         </body>
         </html>
