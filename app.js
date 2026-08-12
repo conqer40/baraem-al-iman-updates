@@ -4954,19 +4954,29 @@ function openWhatsapp(phone, message) {
         showToast("رقم هاتف غير صالح", "error");
         return false;
     }
-    const ipcRenderer = getElectronIpcRenderer();
-    if (ipcRenderer) {
-        ipcRenderer.send("whatsapp:enqueue", {
-            phone: normalized,
-            message,
-            name: ""
-        });
-        showToast("تمت إضافة الرسالة للإرسال عبر تطبيق واتساب");
-        return true;
+    
+    // Standard direct WhatsApp Web / App links
+    const waUrl = `https://web.whatsapp.com/send?phone=${normalized}&text=${encodeURIComponent(message)}`;
+    const waAppUrl = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
+
+    try {
+        if (window.require) {
+            const electron = window.require("electron");
+            if (electron && electron.shell && typeof electron.shell.openExternal === "function") {
+                electron.shell.openExternal(waAppUrl).catch(() => {
+                    electron.shell.openExternal(waUrl);
+                });
+                showToast("✅ تم فتح محادثة الواتساب بنجاح — اضغط إرسال");
+                return true;
+            }
+        }
+    } catch (e) {
+        console.warn("Shell openExternal failed, falling back to window.open", e);
     }
-    const url = `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
-    showToast("تم فتح واتساب — اضغط إرسال");
+
+    // Web / browser fallback
+    window.open(waAppUrl, "_blank");
+    showToast("✅ تم فتح محادثة الواتساب بنجاح — اضغط إرسال");
     return true;
 }
 
