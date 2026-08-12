@@ -670,6 +670,138 @@ function showStartupUpdateModal(updateInfo) {
     });
 }
 
+function showDailyExecutiveBriefing() {
+    if (!state.session.userId) return;
+    
+    const today = todayDate();
+    const lastSeenDate = sessionStorage.getItem("BARAEM_DAILY_BRIEFING_DATE");
+    if (lastSeenDate === today) return;
+
+    const user = currentUser();
+    const hour = new Date().getHours();
+    const greetingTime = hour < 12 ? "صباح الخير والبركة 🌅" : hour < 17 ? "طاب يومك ومساؤك ☀️" : "مساء الخير والأنوار 🌙";
+    
+    const dashboard = getDashboardMetrics();
+    const overdueList = getOverdueFees();
+    
+    // Check for kids birthdays today
+    const birthdayKids = state.children.filter(c => {
+        if (!c.birth_date || c.status !== "ACTIVE") return false;
+        return c.birth_date.slice(5) === today.slice(5);
+    });
+
+    const overlay = document.createElement("div");
+    overlay.id = "daily-briefing-modal";
+    overlay.className = "modal-overlay modal-visible";
+    overlay.style.zIndex = "99990";
+
+    const birthdayHtml = birthdayKids.length > 0 ? `
+        <div style="background:rgba(236,72,153,0.15); border:1px solid rgba(236,72,153,0.3); border-radius:14px; padding:12px 16px; margin-bottom:14px; display:flex; align-items:center; gap:12px;">
+            <div style="font-size:1.8rem;">🎂</div>
+            <div>
+                <strong style="color:#f472b6; font-size:0.92rem; display:block;">عيد ميلاد سعيد اليوم! 🎉</strong>
+                <span style="color:#cbd5e1; font-size:0.86rem;">اليوم يوافق عيد ميلاد: ${birthdayKids.map(k => `*${k.full_name}*`).join("، ")}</span>
+            </div>
+        </div>
+    ` : "";
+
+    const overdueHtml = overdueList.length > 0 ? `
+        <div style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25); border-radius:14px; padding:12px 16px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="font-size:1.6rem; color:#fbbf24;">💰</div>
+                <div>
+                    <strong style="color:#fbbf24; font-size:0.92rem; display:block;">تنبيه المصروفات والرسوم المتأخرة</strong>
+                    <span style="color:#cbd5e1; font-size:0.84rem;">يوجد ${overdueList.length} ملفات أطفال بها رسوم متأخرة تحتاج متابعة وتذكير عبر واتساب.</span>
+                </div>
+            </div>
+            <button class="btn btn-warning btn-sm" id="briefing-goto-finance" style="padding:6px 14px; font-weight:800; border-radius:10px; font-size:0.82rem; white-space:nowrap; background:#d97706; color:#fff; border:none; cursor:pointer;">عرض الرسوم</button>
+        </div>
+    ` : `
+        <div style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.25); border-radius:14px; padding:12px 16px; margin-bottom:14px; display:flex; align-items:center; gap:10px;">
+            <div style="font-size:1.6rem; color:#34d399;">✓</div>
+            <div>
+                <strong style="color:#34d399; font-size:0.92rem; display:block;">التحصيلات المالية منتظمة</strong>
+                <span style="color:#cbd5e1; font-size:0.84rem;">لا توجد متأخرات حرجة حالياً، جميع السجلات مستقرة.</span>
+            </div>
+        </div>
+    `;
+
+    overlay.innerHTML = `
+        <div class="modal-box" style="max-width:620px; width:92%; text-align:right; border-radius:24px; padding:30px; background:linear-gradient(145deg, #0f172a, #1e293b); color:#f8fafc; border:1px solid rgba(255,255,255,0.15); box-shadow:0 25px 60px rgba(0,0,0,0.6); position:relative; overflow:hidden;">
+            <div style="position:absolute; top:-40px; right:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(16,185,129,0.25), transparent 70%); border-radius:50%; pointer-events:none;"></div>
+
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                <div style="display:flex; align-items:center; gap:14px;">
+                    <div style="width:52px; height:52px; border-radius:16px; background:linear-gradient(135deg, #10b981, #059669); display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 8px 20px rgba(16,185,129,0.35);">
+                        🌟
+                    </div>
+                    <div>
+                        <span style="color:#34d399; font-size:0.8rem; font-weight:800;">الموجز والملخص اليومي للأكاديمية</span>
+                        <h3 style="margin:2px 0 0 0; font-size:1.35rem; font-weight:900; color:#ffffff;">${greetingTime}، أ. ${user.full_name}</h3>
+                    </div>
+                </div>
+                <div style="text-align:left; background:rgba(255,255,255,0.06); padding:6px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
+                    <small style="color:#94a3b8; display:block; font-size:0.75rem;">تاريخ اليوم</small>
+                    <strong style="color:#60a5fa; font-size:0.88rem;">${formatArabicDate(today)}</strong>
+                </div>
+            </div>
+
+            <p style="color:#94a3b8; font-size:0.92rem; line-height:1.6; margin-bottom:16px;">
+                إليك نظرة سريعة على جدول أعمال ومواعيد الحضانة اليوم لمساعدتك في إدارة ومتابعة اليوم الدراسي بسلاسة:
+            </p>
+
+            <!-- Key Daily Agenda Stats Grid -->
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:16px;">
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; text-align:center;">
+                    <span style="font-size:0.78rem; color:#94a3b8; display:block;">الأطفال المقيدون</span>
+                    <strong style="font-size:1.3rem; color:#60a5fa; font-weight:900;">${dashboard.activeChildren}</strong>
+                    <small style="font-size:0.72rem; color:#cbd5e1; display:block;">طفل على القوة</small>
+                </div>
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; text-align:center;">
+                    <span style="font-size:0.78rem; color:#94a3b8; display:block;">مواعيد العمل</span>
+                    <strong style="font-size:1.1rem; color:#34d399; font-weight:900;">8:00 - 14:00</strong>
+                    <small style="font-size:0.72rem; color:#cbd5e1; display:block;">الفترة الصباحية</small>
+                </div>
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px; text-align:center;">
+                    <span style="font-size:0.78rem; color:#94a3b8; display:block;">المعلمات والكادر</span>
+                    <strong style="font-size:1.3rem; color:#a78bfa; font-weight:900;">${state.staff.length}</strong>
+                    <small style="font-size:0.72rem; color:#cbd5e1; display:block;">موظف ومعلمة</small>
+                </div>
+            </div>
+
+            ${birthdayHtml}
+            ${overdueHtml}
+
+            <div style="display:flex; gap:10px; justify-content:flex-start; margin-top:20px;">
+                <button class="btn btn-primary" id="btn-close-briefing" style="padding:10px 24px; font-weight:800; font-size:0.95rem; border-radius:12px; background:linear-gradient(135deg, #10b981, #059669); border:none; cursor:pointer;">
+                    <span>🚀 بدء العمل والاطلاع على لوحة التحكم</span>
+                </button>
+                <button class="btn btn-secondary" id="btn-goto-attendance-briefing" style="padding:10px 18px; font-weight:700; font-size:0.9rem; border-radius:12px; background:rgba(255,255,255,0.08); color:#cbd5e1; border:1px solid rgba(255,255,255,0.12); cursor:pointer;">
+                    📅 تسجيل الحضور الآن
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeBriefing = () => {
+        sessionStorage.setItem("BARAEM_DAILY_BRIEFING_DATE", today);
+        overlay.classList.remove("modal-visible");
+        setTimeout(() => overlay.remove(), 300);
+    };
+
+    document.getElementById("btn-close-briefing")?.addEventListener("click", closeBriefing);
+    document.getElementById("btn-goto-attendance-briefing")?.addEventListener("click", () => {
+        closeBriefing();
+        navigate("attendance");
+    });
+    document.getElementById("briefing-goto-finance")?.addEventListener("click", () => {
+        closeBriefing();
+        navigate("finance");
+    });
+}
+
 async function initAndRender() {
     const savedTheme = localStorage.getItem("BARAEM_THEME") || "light";
     if (savedTheme === "dark") {
@@ -694,6 +826,9 @@ async function initAndRender() {
     autoGenerateFeesIfNeeded();
     render();
     checkStartupUpdateNotification();
+    setTimeout(() => {
+        showDailyExecutiveBriefing();
+    }, 500);
 }
 initAndRender();
 
