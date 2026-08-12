@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "4.4.0";
+const CURRENT_APP_VERSION = "4.5.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -2050,6 +2050,8 @@ function renderHomeHub(allowedSections, user, roleLabel) {
                     <p class="metric-hint">${overdueCount ? 'تحتاج متابعة مع أولياء الأمور' : 'تم سداد جميع الرسوم المستحقة'}</p>
                 </div>
             </div>
+        </section>
+
         <!-- EXPRESSIVE APP SECTIONS LAUNCHPAD -->
         <section class="quick-apps-section" style="margin-bottom:28px;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
