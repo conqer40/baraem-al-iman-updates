@@ -5474,4 +5474,27 @@ body:not(.dark-theme) .luxury-sidebar {
     border-color: var(--accent) !important;
 }
 
+/* ═══════════════════════════════════════════
+   EXPRESSIVE QUICK APP TILES
+═══════════════════════════════════════════ */
+.quick-app-tile {
+    outline: none;
+    user-select: none;
+}
+
+.quick-app-tile:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08) !important;
+    border-color: var(--accent) !important;
+}
+
+.quick-app-tile:active {
+    transform: scale(0.97) !important;
+}
+
+.quick-app-tile:hover div:first-of-type {
+    transform: scale(1.08);
+}
+
+
 

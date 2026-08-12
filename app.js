@@ -2050,6 +2050,55 @@ function renderHomeHub(allowedSections, user, roleLabel) {
                     <p class="metric-hint">${overdueCount ? 'تحتاج متابعة مع أولياء الأمور' : 'تم سداد جميع الرسوم المستحقة'}</p>
                 </div>
             </div>
+        <!-- EXPRESSIVE APP SECTIONS LAUNCHPAD -->
+        <section class="quick-apps-section" style="margin-bottom:28px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.4rem;">⚡</span>
+                    <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:var(--ink);">بوابة الأقسام والخدمات السريعة</h3>
+                </div>
+                <span style="font-size:0.85rem; color:var(--ink-soft); font-weight:600;">انقر على أي قسم للدخول الفوري</span>
+            </div>
+
+            <div class="quick-apps-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap:14px;">
+                ${allowedSections.map(sec => {
+                    const iconsMap = {
+                        children: { icon: "👶", color: "#3b82f6", bg: "rgba(59, 130, 246, 0.12)", title: "ملفات الأطفال", hint: "السجلات والبيانات" },
+                        add_child: { icon: "➕", color: "#10b981", bg: "rgba(16, 185, 129, 0.12)", title: "تسجيل طفل جديد", hint: "إضافة ملف جديد" },
+                        attendance: { icon: "📅", color: "#06b6d4", bg: "rgba(6, 182, 212, 0.12)", title: "الحضور والغياب", hint: "اليوم الدراسي" },
+                        finance: { icon: "💰", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.12)", title: "الرسوم والاشتراكات", hint: "التحصيل والمتأخرات" },
+                        payroll: { icon: "💵", color: "#10b981", bg: "rgba(16, 185, 129, 0.12)", title: "كشوف الرواتب", hint: "مرتبات المعلمات" },
+                        staff: { icon: "👩‍🏫", color: "#8b5cf6", bg: "rgba(139, 92, 246, 0.12)", title: "كادر المعلمات", hint: "الموظفون والشيفتات" },
+                        whatsapp: { icon: "💬", color: "#22c55e", bg: "rgba(34, 197, 94, 0.12)", title: "رسائل واتساب", hint: "التواصل مع الأهالي" },
+                        learning: { icon: "📚", color: "#ec4899", bg: "rgba(236, 72, 153, 0.12)", title: "الخطة التعليمية", hint: "المناهج والتحضير" },
+                        exams: { icon: "📝", color: "#6366f1", bg: "rgba(99, 102, 241, 0.12)", title: "الاختبارات والنتائج", hint: "التقييمات والدرجات" },
+                        reports: { icon: "📊", color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.12)", title: "التقارير والكشوف", hint: "طباعة تقارير A4" },
+                        operations: { icon: "🏥", color: "#14b8a6", bg: "rgba(20, 184, 166, 0.12)", title: "الرعاية والعيادة", hint: "السجلات الصحية" },
+                        updates: { icon: "🔄", color: "#f97316", bg: "rgba(249, 115, 22, 0.12)", title: "التحديثات والدعم", hint: "تحديث النظام أونلاين" },
+                        settings: { icon: "⚙️", color: "#64748b", bg: "rgba(100, 116, 139, 0.12)", title: "إعدادات النظام", hint: "النسخ الاحتياطي" },
+                        security: { icon: "🛡️", color: "#e11d48", bg: "rgba(225, 29, 72, 0.12)", title: "الصلاحيات والأمان", hint: "أدوار المستخدمين" }
+                    };
+                    const item = iconsMap[sec] || { icon: "📁", color: "#3b82f6", bg: "rgba(59,130,246,0.1)", title: SECTION_TITLES[sec]?.title || sec, hint: "دخول القسم" };
+                    const badge = navBadge(sec);
+                    return `
+                        <button
+                            type="button"
+                            class="quick-app-tile"
+                            data-nav="${sec}"
+                            style="background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:16px 12px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; cursor:pointer; transition:all 0.2s ease; box-shadow:var(--shadow-sm); position:relative; overflow:hidden;"
+                        >
+                            ${badge ? `<span style="position:absolute; top:8px; right:8px; background:#ef4444; color:#fff; font-size:0.68rem; font-weight:800; padding:2px 6px; border-radius:8px;">${badge}</span>` : ""}
+                            <div style="width:50px; height:50px; border-radius:14px; background:${item.bg}; color:${item.color}; display:flex; align-items:center; justify-content:center; font-size:1.7rem; box-shadow:0 4px 12px rgba(0,0,0,0.05); transition:transform 0.2s ease;">
+                                ${item.icon}
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:2px; width:100%;">
+                                <strong style="color:var(--ink); font-size:0.9rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</strong>
+                                <small style="color:var(--ink-soft); font-size:0.74rem; font-weight:500;">${item.hint}</small>
+                            </div>
+                        </button>
+                    `;
+                }).join("")}
+            </div>
         </section>
 
         <!-- INTERACTIVE LIVE OPERATIONS DASHBOARD (WIDGETS ROW) -->
