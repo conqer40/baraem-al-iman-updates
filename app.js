@@ -604,16 +604,13 @@ async function checkStartupUpdateNotification() {
         const data = await response.json();
         if (!data || !data.version) return;
 
-        const installedVersion = localStorage.getItem("BARAEM_INSTALLED_VERSION") || CURRENT_APP_VERSION;
-        const dismissedVersion = sessionStorage.getItem("BARAEM_DISMISSED_UPDATE");
-
-        // ONLY trigger update notification if remote version is strictly newer than installed version
-        if (isNewerVersion(data.version, installedVersion) && isNewerVersion(data.version, CURRENT_APP_VERSION) && dismissedVersion !== data.version) {
+        // Trigger update notification if remote version is newer/different
+        if (data.version !== CURRENT_APP_VERSION && dismissedVersion !== data.version) {
             setTimeout(() => {
                 showStartupUpdateModal(data);
-            }, 1200);
+            }, 800);
         } else {
-            console.log(`[✓] النظام محدث بالكامل للإصدار الحالي (${CURRENT_APP_VERSION})`);
+            console.log(`[✓] النظام محدث بالكامل للإصدار (${CURRENT_APP_VERSION})`);
         }
     } catch (e) {
         console.debug("Startup update check skipped:", e.message);
