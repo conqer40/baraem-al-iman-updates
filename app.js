@@ -578,7 +578,20 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "4.2.0";
+const CURRENT_APP_VERSION = "4.3.0";
+
+function isNewerVersion(remote, local) {
+    if (!remote || !local) return false;
+    const rParts = String(remote).replace(/^v/i, "").split(".").map(Number);
+    const lParts = String(local).replace(/^v/i, "").split(".").map(Number);
+    for (let i = 0; i < Math.max(rParts.length, lParts.length); i++) {
+        const r = isNaN(rParts[i]) ? 0 : rParts[i];
+        const l = isNaN(lParts[i]) ? 0 : lParts[i];
+        if (r > l) return true;
+        if (r < l) return false;
+    }
+    return false;
+}
 
 async function checkStartupUpdateNotification() {
     try {
@@ -591,12 +604,16 @@ async function checkStartupUpdateNotification() {
         const data = await response.json();
         if (!data || !data.version) return;
 
-        // Check if there is an update available compared to local build
+        const installedVersion = localStorage.getItem("BARAEM_INSTALLED_VERSION") || CURRENT_APP_VERSION;
         const dismissedVersion = sessionStorage.getItem("BARAEM_DISMISSED_UPDATE");
-        if (data.version !== CURRENT_APP_VERSION && dismissedVersion !== data.version) {
+
+        // ONLY trigger update notification if remote version is strictly newer than installed version
+        if (isNewerVersion(data.version, installedVersion) && isNewerVersion(data.version, CURRENT_APP_VERSION) && dismissedVersion !== data.version) {
             setTimeout(() => {
                 showStartupUpdateModal(data);
             }, 1200);
+        } else {
+            console.log(`[✓] النظام محدث بالكامل للإصدار الحالي (${CURRENT_APP_VERSION})`);
         }
     } catch (e) {
         console.debug("Startup update check skipped:", e.message);
@@ -7592,11 +7609,12 @@ async function performAppUpdate() {
         try {
             const res = await ipcRenderer.invoke('app:update-files', {
                 baseUrl: updateUrl,
-                files: ['app.js', 'styles.css', 'index.html', 'ai-logic.js']
+                files: ['app.js', 'styles.css', 'index.html', 'ai-logic.js', 'version.json']
             });
             if (res && res.ok) {
                 const successfulFiles = (res.results || []).filter(r => r.success);
                 if (successfulFiles.length > 0) {
+                    localStorage.setItem("BARAEM_INSTALLED_VERSION", CURRENT_APP_VERSION);
                     showToast(`✅ تم تحديث ${successfulFiles.length} ملفات بنجاح! جاري إعادة التحميل...`, "success");
                     setTimeout(() => {
                         ipcRenderer.invoke('app:reload');
