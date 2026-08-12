@@ -7244,15 +7244,15 @@ function renderUpdatesSection() {
     const appVersion = "الإصدار 4.3.0 الذهبي (أحدث نسخة محدثة 2026)";
     
     return `
-        <div class="updates-wrapper">
-            <!-- Modern Header Strip -->
+        <div class="updates-wrapper dark-support-theme">
+            <!-- Modern Dark Header Strip -->
             <section class="panel updates-hero-panel">
                 <div class="updates-hero-header">
                     <div class="updates-hero-icon">🔄</div>
                     <div>
-                        <div class="tag paid" style="margin-bottom:6px; font-weight:800;">مركز التحديث المباشر والدعم الفني 🌟</div>
-                        <h2 style="margin:0 0 6px 0; color:#1e3a8a; font-size:1.5rem;">إدارة التحديثات والدعم المباشر للأكاديمية</h2>
-                        <p style="margin:0; color:var(--text-muted); font-size:0.95rem;">تحديث فوري لجميع شاشات وميزات البرنامج عبر الإنترنت دون المساس إطلاقاً ببيانات الأطفال أو المعلمات أو الحسابات.</p>
+                        <div class="tag paid" style="margin-bottom:6px; font-weight:800; background:#065f46; color:#34d399; border-color:#059669;">مركز التحديث المباشر والدعم الفني 🌟</div>
+                        <h2 style="margin:0 0 6px 0; color:#f8fafc; font-size:1.6rem; font-weight:800;">إدارة التحديثات والدعم المباشر للأكاديمية</h2>
+                        <p style="margin:0; color:#94a3b8; font-size:0.95rem;">تحديث فوري لجميع شاشات وميزات البرنامج عبر الإنترنت دون المساس إطلاقاً ببيانات الأطفال أو المعلمات أو الحسابات.</p>
                     </div>
                 </div>
 
@@ -7260,23 +7260,23 @@ function renderUpdatesSection() {
                 <div class="updates-status-grid">
                     <div class="updates-status-card">
                         <span class="status-label">إصدار النظام الحالي</span>
-                        <strong class="status-value" style="color:#1d4ed8;">${appVersion}</strong>
+                        <strong class="status-value" style="color:#60a5fa;">${appVersion}</strong>
                         <small class="status-hint">✓ تم تفعيل الرواتب، إلغاء التعاقد، مواعيد 8-2</small>
                     </div>
                     <div class="updates-status-card">
                         <span class="status-label">حماية وتأمين البيانات</span>
-                        <strong class="status-value" style="color:#16a34a;">🛡️ أمان تام 100%</strong>
+                        <strong class="status-value" style="color:#4ade80;">🛡️ أمان تام 100%</strong>
                         <small class="status-hint">البيانات مفصولة ولا تتأثر بالتحديثات نهائياً</small>
                     </div>
                     <div class="updates-status-card">
                         <span class="status-label">قناة الدعم الفني المباشر</span>
-                        <strong class="status-value" style="color:#0284c7;">واتساب المطور المعتمد</strong>
-                        <small class="status-hint">+201022104948 (متاح للمساعدة)</small>
+                        <strong class="status-value" style="color:#38bdf8;">واتساب المطور المعتمد</strong>
+                        <small class="status-hint">+201022104948 (متاح للمساعدة الفورية)</small>
                     </div>
                 </div>
 
                 <!-- Navigation Tabs Inside Updates -->
-                <div class="sub-nav-tabs" style="display:flex; gap:10px; margin-top:20px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+                <div class="sub-nav-tabs" style="display:flex; gap:10px; margin-top:20px; border-bottom:1px solid #334155; padding-bottom:12px;">
                     <button class="btn ${activeTab === 'overview' ? 'btn-primary' : 'btn-ghost'}" type="button" data-action="switch-updates-tab" data-id="overview" style="font-weight:700;">
                         🔄 مركز التحديث والتحكم
                     </button>
@@ -7294,18 +7294,18 @@ function renderUpdatesSection() {
                 <section class="panel">
                     <div class="panel-header">
                         <div>
-                            <h3>🚀 إجراءات التحديث السريع</h3>
-                            <p>اضغط على أي إجراء لتنفيذه فوراً بكل أمان:</p>
+                            <h3 style="color:#f8fafc;">🚀 إجراءات التحديث السريع</h3>
+                            <p style="color:#94a3b8;">اضغط على أي إجراء لتنفيذه فوراً بكل أمان ومباشرة من السيرفر:</p>
                         </div>
                     </div>
                     
                     <div class="updates-action-buttons" style="margin-bottom:20px;">
-                        <button class="btn btn-primary btn-lg" type="button" data-action="check-updates-status" style="background:#2563eb; border-color:#1d4ed8;">
+                        <button class="btn btn-primary btn-lg" type="button" data-action="check-updates-status" style="background:#2563eb; border-color:#3b82f6;">
                             <span style="font-size:1.25rem;">🔍</span>
                             <span>فحص البرنامج والتحديثات</span>
                         </button>
 
-                        <button class="btn btn-primary btn-lg btn-update-action" type="button" data-action="run-app-update" style="background:#059669; border-color:#047857;">
+                        <button class="btn btn-primary btn-lg btn-update-action" type="button" data-action="run-app-update" style="background:#059669; border-color:#10b981;">
                             <span style="font-size:1.25rem;">🚀</span>
                             <span>تحديث البرنامج الآن</span>
                         </button>
@@ -7316,12 +7316,12 @@ function renderUpdatesSection() {
                         </button>
                     </div>
 
-                    <div style="background:var(--surface-alt); padding:16px; border-radius:12px; border:1px solid var(--border);">
-                        <h4 style="margin:0 0 8px 0; color:#1e3a8a;">💡 كيف يعمل التحديث الداخلي؟</h4>
-                        <ul style="margin:0; padding-right:20px; line-height:1.8; font-size:0.9rem; color:var(--text-muted);">
-                            <li><strong>جلب أحدث الميزات:</strong> يقوم النظام بالاتصال بمستودع التحديثات وتنزيل أحدث ملفات الواجهة والتصميم والأكواد البرمجية.</li>
-                            <li><strong>ضمان سلامة الأطفال والمعلمات:</strong> تظل جميع بيانات الأطفال، وسجلات الحضور والغياب، والرسوم، والرواتب محفوظة تماماً في قاعدة بياناتك المحلية.</li>
-                            <li><strong>تطبيق لحظي:</strong> يتم عمل إعادة تحميل للبرنامج في أقل من ثانيتين لتجد كل الشاشات والميزات الجديدة جاهزة للعمل فوراً.</li>
+                    <div class="dark-info-box" style="padding:18px; border-radius:12px;">
+                        <h4 style="margin:0 0 10px 0; color:#60a5fa; font-size:1.1rem;">💡 كيف يعمل نظام التحديث الذكي أونلاين؟</h4>
+                        <ul style="margin:0; padding-right:20px; line-height:1.9; font-size:0.92rem; color:#cbd5e1;">
+                            <li><strong style="color:#f8fafc;">جلب أحدث الميزات:</strong> يقوم النظام بالاتصال بمستودع التحديثات المعتمد وتنزيل أحدث ملفات الواجهة والتصميم والأكواد البرمجية.</li>
+                            <li><strong style="color:#f8fafc;">ضمان سلامة الأطفال والمعلمات:</strong> تظل جميع بيانات الأطفال، وسجلات الحضور والغياب، والرسوم، والرواتب محفوظة تماماً في قاعدة بياناتك المحلية.</li>
+                            <li><strong style="color:#f8fafc;">تطبيق لحظي:</strong> يتم عمل إعادة تحميل للبرنامج في أقل من ثانيتين لتجد كل الشاشات والميزات الجديدة جاهزة للعمل فوراً.</li>
                         </ul>
                     </div>
                 </section>
@@ -7332,30 +7332,30 @@ function renderUpdatesSection() {
                 <section class="panel">
                     <div class="panel-header">
                         <div>
-                            <h3>💬 قنوات الدعم الفني والتواصل المباشر مع المصمم</h3>
-                            <p>فريق التطوير متاح لخدمتك دائماً لأي استفسار أو طلب ميزات جديدة:</p>
+                            <h3 style="color:#f8fafc;">💬 قنوات الدعم الفني والتواصل المباشر مع المصمم</h3>
+                            <p style="color:#94a3b8;">فريق التطوير متاح لخدمتك دائماً لأي استفسار أو طلب ميزات جديدة:</p>
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-bottom:20px;">
-                        <!-- WhatsApp Card -->
-                        <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:14px; padding:20px; text-align:center;">
-                            <div style="font-size:2.8rem; margin-bottom:10px;">📱</div>
-                            <h4 style="margin:0 0 6px 0; color:#166534; font-size:1.2rem;">واتساب المطور المباشر</h4>
-                            <p style="margin:0 0 16px 0; font-size:0.9rem; color:#15803d;">تواصل فوري عبر الواتساب للاستفسارات، التحديثات، والدعم الفني.</p>
-                            <div style="font-size:1.2rem; font-weight:800; color:#166534; margin-bottom:16px; direction:ltr;">+20 102 210 4948</div>
-                            <button class="btn btn-lg btn-whatsapp-dev" type="button" data-action="contact-developer-wa" style="width:100%;">
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px; margin-bottom:20px;">
+                        <!-- WhatsApp Card Dark -->
+                        <div class="dark-card-wa" style="border-radius:16px; padding:24px; text-align:center;">
+                            <div style="font-size:3rem; margin-bottom:10px;">📱</div>
+                            <h4 style="margin:0 0 8px 0; color:#34d399; font-size:1.3rem; font-weight:800;">واتساب المطور المباشر</h4>
+                            <p style="margin:0 0 16px 0; font-size:0.92rem; color:#a7f3d0;">تواصل فوري عبر الواتساب للاستفسارات، التحديثات، والدعم الفني.</p>
+                            <div style="font-size:1.3rem; font-weight:900; color:#6ee7b7; margin-bottom:20px; direction:ltr; letter-spacing:1px;">+20 102 210 4948</div>
+                            <button class="btn btn-lg btn-whatsapp-dev" type="button" data-action="contact-developer-wa" style="width:100%; font-size:1rem;">
                                 <span>💬 فتح محادثة الواتساب الآن</span>
                             </button>
                         </div>
 
-                        <!-- AnyDesk Remote Support Card -->
-                        <div style="background:#eff6ff; border:1px solid #93c5fd; border-radius:14px; padding:20px; text-align:center;">
-                            <div style="font-size:2.8rem; margin-bottom:10px;">🖥️</div>
-                            <h4 style="margin:0 0 6px 0; color:#1e40af; font-size:1.2rem;">الدعم الفني عن بُعد (AnyDesk)</h4>
-                            <p style="margin:0 0 16px 0; font-size:0.9rem; color:#1d4ed8;">إمكانية المساعدة المباشرة على جهازك لحل أي مشكلة أو ضبط الإعدادات.</p>
-                            <div style="font-size:1rem; font-weight:700; color:#1e40af; margin-bottom:16px;">مدمج ومتاح على سطح المكتب</div>
-                            <button class="btn btn-primary" type="button" data-action="launch-anydesk" style="width:100%; background:#2563eb;">
+                        <!-- AnyDesk Remote Support Card Dark -->
+                        <div class="dark-card-anydesk" style="border-radius:16px; padding:24px; text-align:center;">
+                            <div style="font-size:3rem; margin-bottom:10px;">🖥️</div>
+                            <h4 style="margin:0 0 8px 0; color:#93c5fd; font-size:1.3rem; font-weight:800;">الدعم الفني عن بُعد (AnyDesk)</h4>
+                            <p style="margin:0 0 16px 0; font-size:0.92rem; color:#bfdbfe;">إمكانية المساعدة المباشرة على جهازك لحل أي مشكلة أو ضبط الإعدادات.</p>
+                            <div style="font-size:1.05rem; font-weight:700; color:#93c5fd; margin-bottom:20px;">مدمج ومتاح على سطح المكتب</div>
+                            <button class="btn btn-primary" type="button" data-action="launch-anydesk" style="width:100%; background:#2563eb; border-color:#3b82f6; font-size:1rem;">
                                 <span>🚀 تشغيل برنامج AnyDesk للدعم</span>
                             </button>
                         </div>
@@ -7368,51 +7368,51 @@ function renderUpdatesSection() {
                 <section class="panel">
                     <div class="panel-header">
                         <div>
-                            <h3>📋 سجل أحدث التحديثات والميزات المطبقة</h3>
-                            <p>قائمة كاملة بجميع الميزات والتحسينات التي تمت إضافتها للنظام:</p>
+                            <h3 style="color:#f8fafc;">📋 سجل أحدث التحديثات والميزات المطبقة</h3>
+                            <p style="color:#94a3b8;">قائمة كاملة بجميع الميزات والتحسينات التي تمت إضافتها للنظام:</p>
                         </div>
                     </div>
                     <div class="changelog-list">
                         <div class="changelog-item">
-                            <div class="changelog-badge" style="background:#dcfce7; color:#166534;">جديد v4.3.0</div>
+                            <div class="changelog-badge" style="background:#065f46; color:#34d399; border-color:#059669;">جديد v4.3.0</div>
                             <div>
-                                <strong style="color:#166534;">مركز التحديث والدعم الفني المطور:</strong>
-                                <p>شاشة متكاملة بتبويبات سريعة، أزرار فحص وتحديث فوري، وقناة تواصل واتساب مباشرة مع المصمم (+201022104948).</p>
+                                <strong style="color:#34d399; font-size:1rem;">مركز التحديث والدعم الفني بالوضع الليلي الفاخر (Dark Mode):</strong>
+                                <p style="color:#cbd5e1;">شاشة عصرية داكنة ومريحة للعين، مع أزرار فحص وتحديث فوري، وقناة تواصل واتساب مباشرة مع المصمم (+201022104948).</p>
                             </div>
                         </div>
                         <div class="changelog-item">
                             <div class="changelog-badge">جديد</div>
                             <div>
-                                <strong>تعديل الرواتب والمرتبات الأساسية:</strong>
-                                <p>إمكانية تعديل وتحديث مرتبات المعلمات والموظفين مباشرة من شاشة الموظفين وقسم الرواتب مع الحفظ اللحظي والدائم.</p>
+                                <strong style="color:#f8fafc;">تعديل الرواتب والمرتبات الأساسية:</strong>
+                                <p style="color:#94a3b8;">إمكانية تعديل وتحديث مرتبات المعلمات والموظفين مباشرة من شاشة الموظفين وقسم الرواتب مع الحفظ اللحظي والدائم.</p>
                             </div>
                         </div>
                         <div class="changelog-item">
                             <div class="changelog-badge">جديد</div>
                             <div>
-                                <strong>إلغاء وتفعيل التعاقد المباشر:</strong>
-                                <p>أزرار سريعة ومؤمنة في جدول الموظفين لإلغاء التعاقد أو إعادة التفعيل بضغطة زر واحدة مع رسائل تأكيد وحفظ فوري.</p>
+                                <strong style="color:#f8fafc;">إلغاء وتفعيل التعاقد المباشر:</strong>
+                                <p style="color:#94a3b8;">أزرار سريعة ومؤمنة في جدول الموظفين لإلغاء التعاقد أو إعادة التفعيل بضغطة زر واحدة مع رسائل تأكيد وحفظ فوري.</p>
                             </div>
                         </div>
                         <div class="changelog-item">
                             <div class="changelog-badge">محدث</div>
                             <div>
-                                <strong>مواعيد العمل الرسمية (من 8 صباحاً إلى 2 ظهراً):</strong>
-                                <p>ضبط الوردية الصباحية من 08:00 إلى 14:00 في كافة الكشوف وقوالب الطباعة وحسابات ساعات العمل والحضور.</p>
+                                <strong style="color:#f8fafc;">مواعيد العمل الرسمية (من 8 صباحاً إلى 2 ظهراً):</strong>
+                                <p style="color:#94a3b8;">ضبط الوردية الصباحية من 08:00 إلى 14:00 في كافة الكشوف وقوالب الطباعة وحسابات ساعات العمل والحضور.</p>
                             </div>
                         </div>
                         <div class="changelog-item">
                             <div class="changelog-badge">محدث</div>
                             <div>
-                                <strong>السبت والجمعة إجازة أسبوعية رسمية:</strong>
-                                <p>اعتماد السبت والجمعة إجازة أسبوعية رسمية في جداول الحضور والانصراف وكشوف الرواتب الشهرية.</p>
+                                <strong style="color:#f8fafc;">السبت والجمعة إجازة أسبوعية رسمية:</strong>
+                                <p style="color:#94a3b8;">اعتماد السبت والجمعة إجازة أسبوعية رسمية في جداول الحضور والانصراف وكشوف الرواتب الشهرية.</p>
                             </div>
                         </div>
                         <div class="changelog-item">
                             <div class="changelog-badge">أمان</div>
                             <div>
-                                <strong>فصل التحديثات عن قاعدة البيانات (حماية البيانات 100%):</strong>
-                                <p>تحديث كود وشاشات البرنامج من الإنترنت دون المساس إطلاقاً ببيانات الأطفال والمعلمات والرسوم المسجلة.</p>
+                                <strong style="color:#f8fafc;">فصل التحديثات عن قاعدة البيانات (حماية البيانات 100%):</strong>
+                                <p style="color:#94a3b8;">تحديث كود وشاشات البرنامج من الإنترنت دون المساس إطلاقاً ببيانات الأطفال والمعلمات والرسوم المسجلة.</p>
                             </div>
                         </div>
                     </div>
