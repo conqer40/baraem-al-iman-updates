@@ -7686,10 +7686,13 @@ async function performAppUpdate() {
                 const successfulFiles = (res.results || []).filter(r => r.success);
                 if (successfulFiles.length > 0) {
                     localStorage.setItem("BARAEM_INSTALLED_VERSION", CURRENT_APP_VERSION);
-                    showToast(`✅ تم تحديث ${successfulFiles.length} ملفات بنجاح! جاري إعادة التحميل...`, "success");
+                    showToast(`✅ تم تحديث ${successfulFiles.length} ملفات بنجاح! جاري تطبيق التحديث...`, "success");
                     setTimeout(() => {
-                        ipcRenderer.invoke('app:reload');
-                    }, 1400);
+                        try {
+                            ipcRenderer.invoke('app:reload');
+                        } catch (_) {}
+                        window.location.href = window.location.pathname + '?t=' + Date.now();
+                    }, 1200);
                 } else {
                     showToast("لم يتم العثور على ملفات جديدة في رابط التحديث أو تعذر الاتصال بالسيرفر.", "error");
                 }
