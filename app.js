@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.3.0";
+const CURRENT_APP_VERSION = "5.4.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -632,9 +632,19 @@ async function checkStartupUpdateNotification() {
 ═══════════════════════════════════════════════════════════════════════════ */
 const APP_RELEASES_REGISTRY = [
     {
+        version: "5.4.0",
+        date: "2026-08-13",
+        badge: "🚨 الإصدار v5.4.0 (الأحدث)",
+        title: "نظام التنبيه الذكي للغياب المتكرر لجميع الأطفال",
+        items: [
+            { icon: "🚨", title: "ويدجت غياب 3 أيام متتالية", desc: "تنبيه تفاعلي في لوحة التحكم الرئيسية يعرض الأطفال الذين غابوا 3 أيام أو أكثر متتالية." },
+            { icon: "💬", title: "إرسال رسائل اطمئنان سريعة", desc: "زر سريع يفتح واتساب لولي الأمر للاطمئنان على صحة الطفل المتغيب ودعائه بالبركة بنقرة واحدة." }
+        ]
+    },
+    {
         version: "5.3.0",
         date: "2026-08-13",
-        badge: "🎯 الإصدار v5.3.0 (الأحدث)",
+        badge: "🎯 الإصدار v5.3.0",
         title: "إصلاح وعلاج تحديثات البحث وحفظ البيانات وتمييز الطفل المحدد",
         items: [
             { icon: "🧹", title: "تصفير البحث التلقائي", desc: "تفريغ حقل البحث فور الإضافة أو التعديل لضمان ظهور الطفل الجديد في القائمة فوراً." },
@@ -2424,6 +2434,65 @@ function renderHomeHub(allowedSections, user, roleLabel) {
                 </div>
             </div>
         </div>
+
+        <!-- WIDGET: ABSENCE ALERT SYSTEM -->
+        <section class="panel absence-alert-panel" style="margin-bottom:24px; padding:22px; border-radius:20px; background:linear-gradient(135deg, rgba(239,68,68,0.05), rgba(245,158,11,0.05)); border:1px solid rgba(239,68,68,0.25); box-shadow:var(--shadow-md);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg, #ef4444, #f87171); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.4rem; box-shadow:0 4px 12px rgba(239,68,68,0.3);">
+                        🚨
+                    </div>
+                    <div>
+                        <h3 style="margin:0; font-size:1.2rem; font-weight:800; color:var(--ink);">نظام التنبيه الذكي للغياب المتكرر 🚨</h3>
+                        <small style="color:var(--ink-soft); font-weight:600;">قائمة الأطفال المتغيبين لـ 3 أيام متتالية أو أكثر مع إرسال رسائل اطمئنان سريعة</small>
+                    </div>
+                </div>
+                ${(() => {
+                    const absents = getConsecutiveAbsencesForAll();
+                    return `<span class="badge" style="background:${absents.length ? '#ef4444' : '#10b981'}; color:#fff; font-weight:800; padding:4px 12px; border-radius:12px;">
+                        ${absents.length ? `${absents.length} أطفال غائبون متكرر` : "جميع الأطفال منتظمون ✓"}
+                    </span>`;
+                })()}
+            </div>
+
+            ${(() => {
+                const absents = getConsecutiveAbsencesForAll();
+                if (absents.length) {
+                    return `
+                        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:14px;">
+                            ${absents.map(item => `
+                                <div style="border-radius:14px; padding:14px; background:var(--paper); border:1px solid rgba(239,68,68,0.2); box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:space-between; gap:12px; position:relative; overflow:hidden;">
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div style="width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg, #ef4444, #f87171); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.25rem; font-weight:800; overflow:hidden; flex-shrink:0; border:2px solid #fff; box-shadow:0 3px 8px rgba(0,0,0,0.1);">
+                                            ${item.child.photo_url ? `<img src="${item.child.photo_url}" style="width:100%; height:100%; object-fit:cover;">` : item.child.full_name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <strong style="display:block; color:var(--ink); font-size:0.95rem; margin-bottom:2px;">${item.child.full_name}</strong>
+                                            <div style="display:flex; align-items:center; gap:6px;">
+                                                <span style="background:rgba(239,68,68,0.1); color:#ef4444; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:6px;">
+                                                    غياب ${item.absenceCount} أيام ⚠️
+                                                </span>
+                                                <small style="color:var(--ink-soft); font-size:0.75rem;">آخر حضور: ${item.child.first_attendance_date ? formatArabicDate(item.child.first_attendance_date) : "-"}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-whatsapp-pill" onclick="sendAbsenceWhatsapp('${item.child.id}', ${item.absenceCount})" style="padding:6px 12px; font-size:0.8rem; background:#22c55e; color:#fff; border-radius:8px; border:none; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:4px;" title="إرسال رسالة اطمئنان لولي الأمر">
+                                        <span>💬</span>
+                                        <span>اطمئنان</span>
+                                    </button>
+                                </div>
+                            `).join("")}
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div style="text-align:center; padding:18px; color:var(--ink-soft); font-weight:600; font-size:0.92rem;">
+                            🌸 لا توجد غيابات متكررة حالياً. جميع أطفال الأكاديمية منتظمون ويسيرون على خطة الحضور بنجاح!
+                        </div>
+                    `;
+                }
+            })()}
+        </section>
     `;
 }
 
@@ -8785,6 +8854,51 @@ function updateChildAttendanceStatus(childId, date, status) {
     const record = ensureChildAttendanceRecord(childId, date);
     record.status = status;
     saveAndRender();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONSECUTIVE ABSENCES ALERT SYSTEM helper functions
+   ═══════════════════════════════════════════════════════════════════════════ */
+function getConsecutiveAbsencesForAll() {
+    const results = [];
+    (state.children || []).forEach(child => {
+        if (child.status === "WITHDRAWN") return;
+        
+        // Sort attendance records by date descending
+        const childRecords = (state.studentAttendance || [])
+            .filter(r => r.child_id === child.id)
+            .sort((a, b) => b.attendance_date.localeCompare(a.attendance_date));
+        
+        let count = 0;
+        for (const rec of childRecords) {
+            if (rec.status === "ABSENT") {
+                count++;
+            } else if (rec.status === "PRESENT" || rec.status === "LATE" || rec.status === "EXCUSED") {
+                break;
+            }
+        }
+        
+        if (count >= 3) {
+            results.push({
+                child,
+                absenceCount: count,
+                lastRecord: childRecords[0]
+            });
+        }
+    });
+    return results.sort((a, b) => b.absenceCount - a.absenceCount);
+}
+
+function sendAbsenceWhatsapp(childId, absenceCount) {
+    const child = getChildById(childId);
+    if (!child) return;
+    const parentPhone = getChildWhatsappPhone(child.id);
+    if (!parentPhone) {
+        showToast("لا يوجد رقم هاتف مسجل لولي الأمر", "error");
+        return;
+    }
+    const message = `السلام عليكم ورحمة الله وبركاته،\nأولياء أمورنا الكرام، يسر إدارة ${BRAND.name} التواصل معكم للاطمئنان على بطلنا الغالي (${child.full_name}) لغيابه المتكرر عن الأكاديمية منذ (${absenceCount} أيام متتالية) 🌸✨\nنرجو من الله العلي القدير أن يكون بخير وصحة وعافية، ونحن بانتظار عودته لتنور الأكاديمية بوجوده 🤲\n- إدارة ${BRAND.name}`;
+    openWhatsapp(parentPhone, message);
 }
 
 function updateStaffAttendanceStatus(staffId, date, status) {
