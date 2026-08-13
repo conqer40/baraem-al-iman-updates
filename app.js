@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.2.0";
+const CURRENT_APP_VERSION = "5.3.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -632,9 +632,20 @@ async function checkStartupUpdateNotification() {
 ═══════════════════════════════════════════════════════════════════════════ */
 const APP_RELEASES_REGISTRY = [
     {
+        version: "5.3.0",
+        date: "2026-08-13",
+        badge: "🎯 الإصدار v5.3.0 (الأحدث)",
+        title: "إصلاح وعلاج تحديثات البحث وحفظ البيانات وتمييز الطفل المحدد",
+        items: [
+            { icon: "🧹", title: "تصفير البحث التلقائي", desc: "تفريغ حقل البحث فور الإضافة أو التعديل لضمان ظهور الطفل الجديد في القائمة فوراً." },
+            { icon: "✨", title: "تمييز الطفل المختار", desc: "تظليل وتلوين سطر الطفل المحدد داخل الجدول بلون جذاب لمعرفة مكانه بسهولة." },
+            { icon: "💾", title: "مراقبة حفظ الملفات على القرص", desc: "تنبيه فوري للمستخدم في حال وجود أي مشكلة تتعلق بصلاحيات المجلد أو الهارد ديسك." }
+        ]
+    },
+    {
         version: "5.2.0",
         date: "2026-08-13",
-        badge: "🎂 الإصدار v5.2.0 (الأحدث)",
+        badge: "🎂 الإصدار v5.2.0",
         title: "ويدجت أعياد الميلاد والاحتفالات وبطاقات التهنئة المطبوعة",
         items: [
             { icon: "🎂", title: "ويدجت أعياد ميلاد الأسبوع", desc: "تنبيه تلقائي ذكي بأعياد ميلاد أطفال الأكاديمية خلال الـ 7 أيام القادمة." },
@@ -2930,21 +2941,24 @@ function renderChildrenSection() {
                             </tr>
                         </thead>
                         <tbody>
-                            ${childrenProfiles.map((profile) => `
-                                <tr>
-                                    <td>${profile.child.full_name}</td>
-                                    <td>${STAGE_LABELS[profile.child.stage] || profile.child.stage || "-"}</td>
-                                    <td>${profile.lastAttendance ? formatArabicDate(profile.lastAttendance.attendance_date) : "-"}</td>
-                                    <td><span class="tag ${profile.child.status === "ACTIVE" ? "active" : "withdrawn"}">${profile.child.status === "ACTIVE" ? "نشط" : "منسحب"}</span></td>
-                                    <td>
-                                        <div class="row-actions">
-                                            <button type="button" data-action="view-child" data-id="${profile.child.id}">عرض</button>
-                                            <button type="button" data-action="edit-child" data-id="${profile.child.id}">تعديل</button>
-                                            <button type="button" data-action="delete-child" data-id="${profile.child.id}">حذف</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `).join("")}
+                            ${childrenProfiles.map((profile) => {
+                                const isSel = ui.selectedChildId === profile.child.id;
+                                return `
+                                    <tr class="${isSel ? 'is-selected' : ''}" style="${isSel ? 'font-weight:700;' : ''}">
+                                        <td>${profile.child.full_name}</td>
+                                        <td>${STAGE_LABELS[profile.child.stage] || profile.child.stage || "-"}</td>
+                                        <td>${profile.lastAttendance ? formatArabicDate(profile.lastAttendance.attendance_date) : "-"}</td>
+                                        <td><span class="tag ${profile.child.status === "ACTIVE" ? "active" : "withdrawn"}">${profile.child.status === "ACTIVE" ? "نشط" : "منسحب"}</span></td>
+                                        <td>
+                                            <div class="row-actions">
+                                                <button type="button" data-action="view-child" data-id="${profile.child.id}">عرض</button>
+                                                <button type="button" data-action="edit-child" data-id="${profile.child.id}">تعديل</button>
+                                                <button type="button" data-action="delete-child" data-id="${profile.child.id}">حذف</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join("")}
                         </tbody>
                     </table>
                 </div>
