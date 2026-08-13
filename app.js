@@ -1518,13 +1518,24 @@ function saveState() {
         console.error("Local state save failed:", error);
     }
 
-    const desktopResult = saveDesktopState(serializedState);
-    desktopSaved = desktopResult.ok;
-    if (!desktopSaved && desktopResult.error) saveError = desktopResult.error;
+    const ipcRenderer = getElectronIpcRenderer();
+    if (ipcRenderer) {
+        const desktopResult = saveDesktopState(serializedState);
+        desktopSaved = desktopResult.ok;
+        if (!desktopSaved && desktopResult.error) saveError = desktopResult.error;
+    } else {
+        desktopSaved = true;
+    }
 
     if (!localSaved && !desktopSaved) {
         throw new Error(saveError || "تعذر حفظ البيانات على الجهاز.");
     }
+
+    if (ipcRenderer && !desktopSaved) {
+        console.error("Desktop save failed:", saveError);
+        showToast("⚠️ تحذير: فشل حفظ البيانات على القرص! يرجى التحقق من صلاحيات المجلد.", "error");
+    }
+
     if (cloudDb) {
         ui.cloudStatus = "syncing";
         saveToCloud();
@@ -6693,6 +6704,11 @@ function handleClick(event) {
 
     if (button.dataset.nav) {
         ui.activeSection = button.dataset.nav;
+        if (ui.activeSection === "children") {
+            ui.childSearch = "";
+        } else if (ui.activeSection === "staff") {
+            ui.staffSearch = "";
+        }
         render();
         return;
     }
@@ -6785,6 +6801,7 @@ function handleClick(event) {
             return;
         case "new-child":
             ui.childFormId = "";
+            ui.childSearch = "";
             ui.activeSection = "add_child";
             render();
             return;
@@ -6795,6 +6812,7 @@ function handleClick(event) {
         case "edit-child":
             ui.childFormId = id;
             ui.selectedChildId = id;
+            ui.childSearch = "";
             ui.activeSection = "add_child";
             render();
             return;
@@ -8512,6 +8530,7 @@ function saveChild(data) {
 
     ui.childFormId = "";
     ui.selectedChildId = childId;
+    ui.childSearch = "";
     ui.activeSection = "children";
     saveAndRender();
     showToast(existing ? "تم تحديث بيانات الطفل بنجاح." : "تمت إضافة الطفل بنجاح.");
