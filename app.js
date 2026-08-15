@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.4.0";
+const CURRENT_APP_VERSION = "5.5.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -632,9 +632,19 @@ async function checkStartupUpdateNotification() {
 ═══════════════════════════════════════════════════════════════════════════ */
 const APP_RELEASES_REGISTRY = [
     {
+        version: "5.5.0",
+        date: "2026-08-15",
+        badge: "📢 الإصدار v5.5.0 (الأحدث)",
+        title: "نظام إرسال حالة الحضور والوصول اليومي دفعة واحدة لأولياء الأمور",
+        items: [
+            { icon: "📢", title: "زر البث الجماعي لحالة الحضور اليومي", desc: "إرسال رسالة وصول بسلامة الله أو غياب لكل ولي أمر بنقرة زر واحدة عبر الواتساب." },
+            { icon: "⏰", title: "تفاصيل وقت الوصول والوردية", desc: "تضمين تفاصيل وقت حضور الطفل (صباحي/مسائي) وساعة دخوله الأكاديمية تلقائياً بالرسالة." }
+        ]
+    },
+    {
         version: "5.4.0",
         date: "2026-08-13",
-        badge: "🚨 الإصدار v5.4.0 (الأحدث)",
+        badge: "🚨 الإصدار v5.4.0",
         title: "نظام التنبيه الذكي للغياب المتكرر لجميع الأطفال",
         items: [
             { icon: "🚨", title: "ويدجت غياب 3 أيام متتالية", desc: "تنبيه تفاعلي في لوحة التحكم الرئيسية يعرض الأطفال الذين غابوا 3 أيام أو أكثر متتالية." },
@@ -3405,12 +3415,25 @@ function renderAttendanceSection() {
                         <p>تسجيل سريع بأزرار صباحي ومسائي منفصلة في نفس الشاشة.</p>
                     </div>
                 </div>
-                <div class="field" style="margin-bottom:10px;">
-                    <label>فلتر بالفصل</label>
-                    <select data-ui-field="attendanceStageFilter">
-                        <option value="" ${!stageFilter ? "selected" : ""}>— اختر الفصل أولاً —</option>
-                        ${Object.entries(STAGE_LABELS).map(([k, v]) => `<option value="${k}" ${stageFilter === k ? "selected" : ""}>${v}</option>`).join("")}
-                    </select>
+                <div style="display:flex; align-items:flex-end; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
+                    <div class="field" style="margin:0; flex-grow:1; min-width:200px;">
+                        <label>فلتر بالفصل</label>
+                        <select data-ui-field="attendanceStageFilter">
+                            <option value="" ${!stageFilter ? "selected" : ""}>— اختر الفصل أولاً —</option>
+                            ${Object.entries(STAGE_LABELS).map(([k, v]) => `<option value="${k}" ${stageFilter === k ? "selected" : ""}>${v}</option>`).join("")}
+                        </select>
+                    </div>
+                    ${stageFilter ? `
+                        <button class="btn btn-whatsapp-pill" type="button" data-action="broadcast-today-attendance" style="background:#22c55e; color:#fff; border:none; cursor:pointer; font-weight:700; height:42px; display:inline-flex; align-items:center; gap:6px; border-radius:10px; padding:0 16px;">
+                            <span>💬</span>
+                            <span>إرسال حالة حضور اليوم لأولياء أمور الفصل</span>
+                        </button>
+                    ` : `
+                        <button class="btn btn-whatsapp-pill" type="button" data-action="broadcast-today-attendance-all" style="background:#22c55e; color:#fff; border:none; cursor:pointer; font-weight:700; height:42px; display:inline-flex; align-items:center; gap:6px; border-radius:10px; padding:0 16px;">
+                            <span>💬</span>
+                            <span>إرسال حالة حضور اليوم للجميع (كل الفصول)</span>
+                        </button>
+                    `}
                 </div>
                 <div class="table-wrap">
                     <table class="attendance-table att-quick-table">
@@ -7166,6 +7189,12 @@ function handleClick(event) {
         case "wa-broadcast-stage":
             broadcastWhatsappToAllParents(ui.whatsappBroadcastTemplate, ui.whatsappStage || "ALL", getWhatsappRange());
             return;
+        case "broadcast-today-attendance":
+            broadcastTodayAttendanceWhatsapp(ui.attendanceStageFilter || "ALL");
+            return;
+        case "broadcast-today-attendance-all":
+            broadcastTodayAttendanceWhatsapp("ALL");
+            return;
         case "wa-broadcast-overdue":
             sendAllOverdueFeeReminders(ui.whatsappStage || "ALL");
             return;
@@ -8899,6 +8928,86 @@ function sendAbsenceWhatsapp(childId, absenceCount) {
     }
     const message = `السلام عليكم ورحمة الله وبركاته،\nأولياء أمورنا الكرام، يسر إدارة ${BRAND.name} التواصل معكم للاطمئنان على بطلنا الغالي (${child.full_name}) لغيابه المتكرر عن الأكاديمية منذ (${absenceCount} أيام متتالية) 🌸✨\nنرجو من الله العلي القدير أن يكون بخير وصحة وعافية، ونحن بانتظار عودته لتنور الأكاديمية بوجوده 🤲\n- إدارة ${BRAND.name}`;
     openWhatsapp(parentPhone, message);
+}
+
+function broadcastTodayAttendanceWhatsapp(stage = "ALL") {
+    const today = todayDate();
+    const activeChildren = (state.children || [])
+        .filter(c => c.status === "ACTIVE")
+        .filter(c => stage === "ALL" || c.stage === stage)
+        .filter(c => isValidPhone(getChildWhatsappPhone(c.id)));
+        
+    if (!activeChildren.length) {
+        showToast("لا يوجد أطفال نشطون أو هواتف مسجلة للإرسال", "error");
+        return;
+    }
+    
+    const stageLabel = stage === "ALL" ? "جميع الفصول" : (STAGE_LABELS[stage] || stage);
+    
+    showConfirm(`سيتم تجهيز وإرسال ${activeChildren.length} رسالة حضور وغياب اليوم لأولياء أمور مرحلة (${stageLabel}) عبر واتساب. هل تريد الاستمرار؟`, () => {
+        let sentCount = 0;
+        activeChildren.forEach(child => {
+            const attRecord = state.studentAttendance.find(r => r.child_id === child.id && r.attendance_date === today);
+            const mStatus = attRecord?.status || "ABSENT";
+            const eStatus = attRecord?.evening_status || "ABSENT";
+            
+            let status = "ABSENT";
+            let periodText = "";
+            let timeText = "";
+            
+            if (mStatus === "PRESENT" || mStatus === "LATE") {
+                status = "PRESENT";
+                periodText = "الفترة الصباحية";
+                if (attRecord?.check_in_time) timeText = ` الساعة (${attRecord.check_in_time})`;
+            } else if (eStatus === "PRESENT") {
+                status = "PRESENT";
+                periodText = "الفترة المسائية";
+                if (attRecord?.evening_check_in_time) timeText = ` الساعة (${attRecord.evening_check_in_time})`;
+            } else if (mStatus === "EXCUSED" || eStatus === "EXCUSED") {
+                status = "EXCUSED";
+            }
+            
+            let message = "";
+            if (status === "PRESENT") {
+                message = [
+                    `السلام عليكم ورحمة الله وبركاته، 🌸`,
+                    `نود إعلامكم بأن بطلنا الغالي *${child.full_name}* قد وصل بسلامة الله إلى الأكاديمية اليوم (${periodText})${timeText} وهو حاضر معنا ويسير على خطته التعليمية بنجاح 🤲✨`,
+                    `نتمنى له يوماً ممتعاً ومفيداً!`,
+                    ``,
+                    `_${BRAND.name}_`
+                ].join("\n");
+            } else if (status === "EXCUSED") {
+                message = [
+                    `السلام عليكم ورحمة الله وبركاته، 🌸`,
+                    `نود إعلامكم بتسجيل بطلنا الغالي *${child.full_name}* (غياب بعذر مقبول) اليوم عن الأكاديمية 🤲🌸`,
+                    `نتمنى له دوام الصحة والعافية والعودة القريبة!`,
+                    ``,
+                    `_${BRAND.name}_`
+                ].join("\n");
+            } else {
+                message = [
+                    `السلام عليكم ورحمة الله وبركاته، 🌸`,
+                    `نود إعلامكم بأن بطلنا الغالي *${child.full_name}* متغيب اليوم عن الأكاديمية، نتمنى أن يكون بخير وصحة وعافية 🤲✨`,
+                    `نحن بانتظار عودته لتنور الأكاديمية بوجوده.`,
+                    ``,
+                    `_${BRAND.name}_`
+                ].join("\n");
+            }
+            
+            const phone = getChildWhatsappPhone(child.id);
+            if (openWhatsapp(phone, message)) {
+                sentCount++;
+                recordWhatsappLog({
+                    recipient_type: "PARENT",
+                    recipient_name: child.full_name,
+                    phone,
+                    template_label: `حضور يومي - ${status === "PRESENT" ? "حضور" : status === "EXCUSED" ? "عذر" : "غياب"}`
+                });
+            }
+        });
+        
+        showToast(`✅ تم إدراج ${sentCount} رسالة في طابور إرسال واتساب بنجاح!`, "success");
+    });
 }
 
 function updateStaffAttendanceStatus(staffId, date, status) {
