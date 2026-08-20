@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.5.0";
+const CURRENT_APP_VERSION = "5.6.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -632,9 +632,18 @@ async function checkStartupUpdateNotification() {
 ═══════════════════════════════════════════════════════════════════════════ */
 const APP_RELEASES_REGISTRY = [
     {
+        version: "5.6.0",
+        date: "2026-08-20",
+        badge: "❌ الإصدار v5.6.0 (الأحدث)",
+        title: "إدراج قالب إشعار غياب الطفل اليومي مع التاريخ",
+        items: [
+            { icon: "❌", title: "قالب غياب الطفل اليومي", desc: "إضافة قالب سريع مخصص في شاشة قوالب الواتساب يحدد تاريخ اليوم واسم اليوم لإرسال إشعار غياب الطفل لأهله بضغطة زر." }
+        ]
+    },
+    {
         version: "5.5.0",
         date: "2026-08-15",
-        badge: "📢 الإصدار v5.5.0 (الأحدث)",
+        badge: "📢 الإصدار v5.5.0",
         title: "نظام إرسال حالة الحضور والوصول اليومي دفعة واحدة لأولياء الأمور",
         items: [
             { icon: "📢", title: "زر البث الجماعي لحالة الحضور اليومي", desc: "إرسال رسالة وصول بسلامة الله أو غياب لكل ولي أمر بنقرة زر واحدة عبر الواتساب." },
@@ -10078,6 +10087,11 @@ function showSmartWhatsappModal(childId) {
     const remBal = child.remaining_balance || 0;
     const stage = STAGE_LABELS[child.stage] || child.stage;
 
+    const curDate = new Date(todayDate());
+    const dayOfWeek = curDate.getDay();
+    const dayName = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][dayOfWeek] || "";
+    const formattedDate = formatArabicDate(todayDate());
+
     const templates = [
         {
             title: "🚌 إشعار وصول آمن للحضانة",
@@ -10086,6 +10100,10 @@ function showSmartWhatsappModal(childId) {
         {
             title: "🏠 إشعار الانصراف والاستلام",
             text: `السلام عليكم ورحمة الله وبركاته،\nنود إحاطتكم بأنه تم تسليم طفلكم الحبيب (${child.full_name}) عند انتهاء اليوم الدراسي بسلام بحمد الله.\nدمتم ودام أطفالكم في رعاية الله وحفظه 🌟`
+        },
+        {
+            title: "❌ إشعار غياب الطفل اليوم",
+            text: `السلام عليكم ورحمة الله وبركاته،\nأولياء أمورنا الكرام، نحيطكم علماً بأن بطلنا الصغير (${child.full_name}) متغيب اليوم (${dayName}) الموافق (${formattedDate}) عن الحضور في ${BRAND.name}.\nنرجو من الله أن يكون المانع خيراً، ونتمنى له دوام الصحة والعافية دائماً 🤲🌸\n- إدارة ${BRAND.name}`
         },
         {
             title: "💰 تذكير لطيف بسداد المصروفات",
