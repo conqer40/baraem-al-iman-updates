@@ -578,7 +578,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.6.0";
+const CURRENT_APP_VERSION = "5.7.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -632,9 +632,18 @@ async function checkStartupUpdateNotification() {
 ═══════════════════════════════════════════════════════════════════════════ */
 const APP_RELEASES_REGISTRY = [
     {
+        version: "5.7.0",
+        date: "2026-08-26",
+        badge: "🎉 الإصدار v5.7.0 (الأحدث)",
+        title: "إضافة قالب عوداً حميداً للطفل بعد غياب طويل",
+        items: [
+            { icon: "🎉", title: "قالب عوداً حميداً للطفل", desc: "إضافة قالب واتساب سريع مخصص للترحيب بعودة الطفل للحضانة بعد فترة غياب طويلة بضغطة زر واحدة." }
+        ]
+    },
+    {
         version: "5.6.0",
         date: "2026-08-20",
-        badge: "❌ الإصدار v5.6.0 (الأحدث)",
+        badge: "❌ الإصدار v5.6.0",
         title: "إدراج قالب إشعار غياب الطفل اليومي مع التاريخ",
         items: [
             { icon: "❌", title: "قالب غياب الطفل اليومي", desc: "إضافة قالب سريع مخصص في شاشة قوالب الواتساب يحدد تاريخ اليوم واسم اليوم لإرسال إشعار غياب الطفل لأهله بضغطة زر." }
@@ -10104,6 +10113,10 @@ function showSmartWhatsappModal(childId) {
         {
             title: "❌ إشعار غياب الطفل اليوم",
             text: `السلام عليكم ورحمة الله وبركاته،\nأولياء أمورنا الكرام، نحيطكم علماً بأن بطلنا الصغير (${child.full_name}) متغيب اليوم (${dayName}) الموافق (${formattedDate}) عن الحضور في ${BRAND.name}.\nنرجو من الله أن يكون المانع خيراً، ونتمنى له دوام الصحة والعافية دائماً 🤲🌸\n- إدارة ${BRAND.name}`
+        },
+        {
+            title: "🎉 عوداً حميداً للطفل (بعد غياب)",
+            text: `السلام عليكم ورحمة الله وبركاته،\nأولياء أمورنا الكرام، عوداً حميداً على رجوع طفلنا الحبيب (${child.full_name}) للحضانة بسلامة الله.\nسعدنا جداً برؤيته وتفاعله اليوم ونوّر الأكاديمية بوجوده من جديد 🌸✨\n- إدارة ${BRAND.name}`
         },
         {
             title: "💰 تذكير لطيف بسداد المصروفات",
