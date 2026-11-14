@@ -140,12 +140,52 @@ const BRAND = {
     tagline: "تربية إيمانية، تعليم حديث، متابعة يومية دقيقة"
 };
 
-const STAGE_LABELS = {
+const DEFAULT_STAGE_LABELS = {
     PRE_K: "فصل بري كجي",
     LEVEL_1: "فصل كجي وان",
     LEVEL_2: "فصل كجي تو",
     ADVANCED: "فصل المستوى المتقدم"
 };
+
+function getClassroomsList() {
+    try {
+        if (typeof state !== "undefined" && state && Array.isArray(state.classrooms)) {
+            return state.classrooms;
+        }
+    } catch (_) {}
+    return [];
+}
+
+const STAGE_LABELS = new Proxy({}, {
+    get(target, prop) {
+        if (typeof prop === "symbol" || prop === "then") return target[prop];
+        const list = getClassroomsList();
+        if (list.length) {
+            const found = list.find((c) => c.code === prop || c.id === prop);
+            if (found && found.name) return found.name;
+        }
+        if (DEFAULT_STAGE_LABELS[prop]) return DEFAULT_STAGE_LABELS[prop];
+        return target[prop] || prop;
+    },
+    ownKeys(target) {
+        const keys = new Set();
+        const list = getClassroomsList();
+        if (list.length) {
+            list.forEach((c) => {
+                if (c.code || c.id) keys.add(c.code || c.id);
+            });
+        }
+        Object.keys(DEFAULT_STAGE_LABELS).forEach((k) => keys.add(k));
+        return Array.from(keys);
+    },
+    getOwnPropertyDescriptor(target, prop) {
+        return {
+            enumerable: true,
+            configurable: true,
+            value: this.get(target, prop)
+        };
+    }
+});
 
 const SUPPORT_TYPE_LABELS = {
     NORMAL: "عادي",
@@ -522,9 +562,10 @@ const defaultUi = {
     attendanceChildTab: "morning",
     staffAttendanceTab: "all",
     staffListTab: "list",
-    settingsTab: "users",
+    settingsTab: "classrooms",
     userFormId: null,
     subjectFormId: null,
+    classroomFormId: null,
     speechTherapySpecialistId: "",
     followupFormId: null,
     followupChildStage: "",
@@ -578,7 +619,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.7.0";
+const CURRENT_APP_VERSION = "5.8.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -632,9 +673,20 @@ async function checkStartupUpdateNotification() {
 ═══════════════════════════════════════════════════════════════════════════ */
 const APP_RELEASES_REGISTRY = [
     {
+        version: "5.8.0",
+        date: "2026-11-14",
+        badge: "🏫 الإصدار v5.8.0 (الأحدث)",
+        title: "نظام تكويد وإدارة الفصول الدراسية وسهولة إضافتها",
+        items: [
+            { icon: "🏫", title: "تكويد الفصول بكل سهولة", desc: "قسم متكامل لإضافة وتعديل وحذف فصول الحضانة، تحديد كود الفصل، المعلمة المسؤولة، والسعة الاستيعابية." },
+            { icon: "⚡", title: "إضافة فصل سريع من استمارة الطفل", desc: "زر سريع (+ تكويد فصل جديد) متاح مباشرة داخل استمارة تسجيل الطفل لإضافة الفصل واختياره فوراً دون مغادرة الصفحة." },
+            { icon: "📊", title: "متابعة نسب إشغال الفصول", desc: "بطاقات إحصائية تفاعلية تعرض عدد الطلاب النشطين بكل فصل مع شريط ملون لنسبة الإشغال." }
+        ]
+    },
+    {
         version: "5.7.0",
         date: "2026-08-26",
-        badge: "🎉 الإصدار v5.7.0 (الأحدث)",
+        badge: "🎉 الإصدار v5.7.0",
         title: "إضافة قالب عوداً حميداً للطفل بعد غياب طويل",
         items: [
             { icon: "🎉", title: "قالب عوداً حميداً للطفل", desc: "إضافة قالب واتساب سريع مخصص للترحيب بعودة الطفل للحضانة بعد فترة غياب طويلة بضغطة زر واحدة." }
@@ -1134,6 +1186,12 @@ function createSeedData() {
             {
                 ...REQUIRED_ADMIN_ACCOUNT
             }
+        ],
+        classrooms: [
+            { id: "class-1", code: "PRE_K", name: "فصل بري كجي", teacher_id: "", capacity: 20, color: "#3b82f6" },
+            { id: "class-2", code: "LEVEL_1", name: "فصل كجي وان", teacher_id: "", capacity: 20, color: "#10b981" },
+            { id: "class-3", code: "LEVEL_2", name: "فصل كجي تو", teacher_id: "", capacity: 20, color: "#f59e0b" },
+            { id: "class-4", code: "ADVANCED", name: "فصل المستوى المتقدم", teacher_id: "", capacity: 20, color: "#8b5cf6" }
         ],
         parents: [
             {
@@ -1790,6 +1848,27 @@ function normalizeStateSchema(nextState) {
         : [];
 
     normalized.followUps = Array.isArray(normalized.followUps) ? normalized.followUps : [];
+
+    if (!Array.isArray(normalized.classrooms) || normalized.classrooms.length === 0) {
+        normalized.classrooms = [
+            { id: "class-1", code: "PRE_K", name: "فصل بري كجي", teacher_id: "", capacity: 20, color: "#3b82f6" },
+            { id: "class-2", code: "LEVEL_1", name: "فصل كجي وان", teacher_id: "", capacity: 20, color: "#10b981" },
+            { id: "class-3", code: "LEVEL_2", name: "فصل كجي تو", teacher_id: "", capacity: 20, color: "#f59e0b" },
+            { id: "class-4", code: "ADVANCED", name: "فصل المستوى المتقدم", teacher_id: "", capacity: 20, color: "#8b5cf6" }
+        ];
+    }
+    (normalized.children || []).forEach((c) => {
+        if (c.stage && !normalized.classrooms.some((cls) => cls.code === c.stage || cls.id === c.stage)) {
+            normalized.classrooms.push({
+                id: `class-${c.stage}`,
+                code: c.stage,
+                name: DEFAULT_STAGE_LABELS[c.stage] || c.stage,
+                teacher_id: "",
+                capacity: 20,
+                color: "#6366f1"
+            });
+        }
+    });
 
     normalized.aiSettings = {
         groqApiKey: "",
@@ -3017,7 +3096,13 @@ function renderChildrenSection() {
                         <h3>قائمة الأطفال <span class="count-badge">${childrenList.length}</span></h3>
                         <p>اختَر طفلًا لعرض ملفه، أو اضغط تعديل لتعديل بياناته.</p>
                     </div>
-                    <button class="btn btn-primary" type="button" data-action="new-child">إضافة طفل جديد</button>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-secondary" type="button" data-action="manage-classrooms" style="display:inline-flex; align-items:center; gap:6px; font-weight:700;">
+                            <span>🏫</span>
+                            <span>تكويد وإدارة الفصول</span>
+                        </button>
+                        <button class="btn btn-primary" type="button" data-action="new-child">إضافة طفل جديد</button>
+                    </div>
                 </div>
                 <div class="search-wrap">
                     <div class="search-box">
@@ -3127,7 +3212,12 @@ function renderAddChildSection() {
                             <input name="birth_date" type="date" required value="${formChild?.birth_date || ""}">
                         </div>
                         <div class="field">
-                            <label>الفصل</label>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <label style="margin:0;">الفصل</label>
+                                <button type="button" data-action="quick-add-classroom" style="background:none; border:none; color:var(--primary); font-size:0.82rem; font-weight:700; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
+                                    <span>+</span><span>تكويد فصل جديد</span>
+                                </button>
+                            </div>
                             <select name="stage" required>${optionsFromMap(STAGE_LABELS, formChild?.stage)}</select>
                         </div>
                     </div>
@@ -3435,7 +3525,12 @@ function renderAttendanceSection() {
                 </div>
                 <div style="display:flex; align-items:flex-end; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
                     <div class="field" style="margin:0; flex-grow:1; min-width:200px;">
-                        <label>فلتر بالفصل</label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label style="margin:0;">فلتر بالفصل</label>
+                            <button type="button" data-action="manage-classrooms" style="background:none; border:none; color:var(--primary); font-size:0.8rem; font-weight:700; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
+                                <span>🏫</span><span>إدارة وتكويد الفصول</span>
+                            </button>
+                        </div>
                         <select data-ui-field="attendanceStageFilter">
                             <option value="" ${!stageFilter ? "selected" : ""}>— اختر الفصل أولاً —</option>
                             ${Object.entries(STAGE_LABELS).map(([k, v]) => `<option value="${k}" ${stageFilter === k ? "selected" : ""}>${v}</option>`).join("")}
@@ -7242,8 +7337,33 @@ function handleClick(event) {
             ui.settingsTab = id;
             ui.userFormId = null;
             ui.subjectFormId = null;
+            ui.classroomFormId = null;
             render();
             return;
+        case "manage-classrooms":
+            ui.activeSection = "settings";
+            ui.settingsTab = "classrooms";
+            render();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+        case "open-classroom-modal":
+        case "quick-add-classroom":
+            showClassroomModal();
+            return;
+        case "edit-classroom-modal":
+            showClassroomModal(id);
+            return;
+        case "delete-classroom":
+            deleteClassroom(id);
+            return;
+        case "filter-children-by-class": {
+            const cls = (state.classrooms || []).find((c) => c.code === id || c.id === id);
+            ui.activeSection = "children";
+            ui.childSearch = cls ? cls.name : id;
+            render();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+        }
         case "new-user":     ui.userFormId = ""; render(); return;
         case "edit-user":    ui.userFormId = id; render(); return;
         case "cancel-user":  ui.userFormId = null; render(); return;
@@ -7742,6 +7862,7 @@ function renderFollowupsSection() {
 
 /* --- Settings Section --- */
 const SETTINGS_TABS = [
+    { id: "classrooms", label: "🏫 الفصول الدراسية" },
     { id: "users", label: "المستخدمون" },
     { id: "permissions", label: "الصلاحيات" },
     { id: "subjects", label: "المواد الدراسية" },
@@ -7751,13 +7872,13 @@ const SETTINGS_TABS = [
 ];
 
 function renderSettingsSection() {
-    const tab = ui.settingsTab || "users";
+    const tab = ui.settingsTab || "classrooms";
     return `
         <section class="panel" style="margin-bottom:14px;">
             <div class="panel-header">
                 <div>
                     <h3>إعدادات النظام</h3>
-                    <p>إدارة المستخدمين، مصفوفة الصلاحيات، المواد، والنسخ الاحتياطي للبيانات.</p>
+                    <p>إدارة وتكويد الفصول الدراسية، المستخدمين، مصفوفة الصلاحيات، المواد، والنسخ الاحتياطي للبيانات.</p>
                 </div>
             </div>
             <div class="settings-tabs">
@@ -7766,6 +7887,7 @@ function renderSettingsSection() {
                 `).join("")}
             </div>
         </section>
+        ${tab === "classrooms" ? renderSettingsClassrooms() : ""}
         ${tab === "users" ? renderSettingsUsers() : ""}
         ${tab === "permissions" ? renderSettingsPermissions() : ""}
         ${tab === "subjects" ? renderSettingsSubjects() : ""}
@@ -7933,6 +8055,267 @@ function renderSettingsSubjects() {
             </div>
         </section>
     `;
+}
+
+function renderSettingsClassrooms() {
+    const classrooms = Array.isArray(state.classrooms) ? state.classrooms : [];
+    const totalCapacity = classrooms.reduce((sum, c) => sum + (Number(c.capacity) || 0), 0);
+    const totalEnrolled = state.children.filter((c) => c.status === "ACTIVE").length;
+
+    return `
+        <section class="panel" style="margin-bottom:16px;">
+            <div class="panel-header" style="flex-wrap:wrap; gap:12px;">
+                <div>
+                    <h3 style="display:flex; align-items:center; gap:8px;">
+                        <span>🏫</span>
+                        <span>إدارة وتكويد الفصول الدراسية</span>
+                        <span class="count-badge">${classrooms.length} فصول</span>
+                    </h3>
+                    <p>تكويد الفصول، ربطها بالمعلمات المسؤولات، وتحديد السعة الاستيعابية لكل فصل لسهولة متابعة وتوزيع الطلاب.</p>
+                </div>
+                <button class="btn btn-primary" type="button" data-action="open-classroom-modal" style="display:inline-flex; align-items:center; gap:8px; font-weight:800; padding:10px 20px; border-radius:12px; box-shadow:0 4px 14px rgba(37,99,235,0.25);">
+                    <span style="font-size:1.2rem;">+</span>
+                    <span>تكويد فصل جديد</span>
+                </button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-top:16px;">
+                <div class="stat-card" style="padding:16px; border-radius:14px; background:var(--bg); border:1px solid var(--line);">
+                    <span style="font-size:0.82rem; color:var(--ink-soft); font-weight:600;">عدد الفصول المكوّدة</span>
+                    <strong style="font-size:1.6rem; color:var(--primary); display:block; margin-top:4px;">${classrooms.length}</strong>
+                </div>
+                <div class="stat-card" style="padding:16px; border-radius:14px; background:var(--bg); border:1px solid var(--line);">
+                    <span style="font-size:0.82rem; color:var(--ink-soft); font-weight:600;">إجمالي الطاقة الاستيعابية</span>
+                    <strong style="font-size:1.6rem; color:#10b981; display:block; margin-top:4px;">${totalCapacity} طفل</strong>
+                </div>
+                <div class="stat-card" style="padding:16px; border-radius:14px; background:var(--bg); border:1px solid var(--line);">
+                    <span style="font-size:0.82rem; color:var(--ink-soft); font-weight:600;">الطلاب النشطون حالياً</span>
+                    <strong style="font-size:1.6rem; color:#8b5cf6; display:block; margin-top:4px;">${totalEnrolled} طفل</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
+            ${classrooms.map((cls) => {
+                const code = cls.code || cls.id;
+                const kidsInClass = (state.children || []).filter((c) => c.stage === code || c.stage === cls.id);
+                const activeKids = kidsInClass.filter((c) => c.status === "ACTIVE").length;
+                const capacity = Number(cls.capacity) || 20;
+                const pct = capacity > 0 ? Math.min(Math.round((activeKids / capacity) * 100), 100) : 0;
+                const teacher = (state.staff || []).find((s) => s.id === cls.teacher_id);
+                const color = cls.color || "#3b82f6";
+
+                return `
+                    <div class="panel" style="border-top: 5px solid ${color}; border-radius:16px; padding:20px; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s ease, box-shadow 0.2s ease;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${color};"></span>
+                                    <h4 style="margin:0; font-size:1.2rem; font-weight:800; color:var(--ink);">${cls.name}</h4>
+                                </div>
+                                <span class="tag" style="direction:ltr; font-family:monospace; font-weight:700; font-size:0.75rem; background:var(--bg); color:var(--ink-soft); border:1px solid var(--line);">${cls.code}</span>
+                            </div>
+
+                            <div style="font-size:0.88rem; color:var(--ink-soft); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+                                <span>👩‍🏫</span>
+                                <span>المعلمة المسؤولة:</span>
+                                <strong style="color:var(--ink);">${teacher ? teacher.full_name : '<span style="color:var(--ink-soft); font-weight:normal;">غير محددة</span>'}</strong>
+                            </div>
+
+                            <div style="background:var(--bg); padding:12px; border-radius:12px; border:1px solid var(--line); margin-bottom:14px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:6px;">
+                                    <span>عدد الأطفال النشطين: <strong>${activeKids}</strong></span>
+                                    <span>السعة: <strong>${capacity}</strong> (${pct}%)</span>
+                                </div>
+                                <div style="height:8px; background:var(--line); border-radius:10px; overflow:hidden;">
+                                    <div style="width:${pct}%; height:100%; background:${pct >= 90 ? '#ef4444' : color}; border-radius:10px; transition:width 0.3s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid var(--line); padding-top:14px; margin-top:8px;">
+                            <button type="button" class="btn btn-ghost btn-sm" data-action="filter-children-by-class" data-id="${cls.code}" style="font-size:0.82rem; color:var(--primary); font-weight:700;">
+                                👥 عرض طلاب الفصل (${kidsInClass.length})
+                            </button>
+                            <div style="display:flex; gap:6px;">
+                                <button type="button" class="btn btn-secondary btn-sm" data-action="edit-classroom-modal" data-id="${cls.id}" style="font-weight:700; padding:6px 12px; border-radius:8px;">
+                                    ✏ تعديل
+                                </button>
+                                <button type="button" class="btn btn-ghost btn-sm" data-action="delete-classroom" data-id="${cls.id}" style="color:var(--danger); font-weight:700; padding:6px 10px; border-radius:8px;">
+                                    🗑 حذف
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("")}
+        </section>
+    `;
+}
+
+function showClassroomModal(classroomId = null) {
+    const isEdit = Boolean(classroomId);
+    const cls = isEdit
+        ? (state.classrooms || []).find((c) => c.id === classroomId || c.code === classroomId)
+        : null;
+
+    const existing = document.getElementById("classroom-modal");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "classroom-modal";
+    overlay.className = "modal-overlay modal-visible";
+    overlay.style.zIndex = "99999";
+
+    overlay.innerHTML = `
+        <div class="modal-box" style="max-width:540px; width:92%; text-align:right; border-radius:22px; padding:28px; background:var(--paper); color:var(--ink); border:1px solid var(--line); box-shadow:var(--shadow-lg);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:1.8rem; background:rgba(59,130,246,0.12); padding:6px 12px; border-radius:12px;">🏫</span>
+                    <div>
+                        <h3 style="margin:0; font-size:1.25rem; font-weight:800;">${isEdit ? "تعديل بيانات الفصل" : "تكويد فصل دراسي جديد"}</h3>
+                        <small style="color:var(--ink-soft); font-weight:600;">حدد اسم الفصل وكوده والمعلمة المسؤولة عنه بكل سهولة.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('classroom-modal').remove()" style="font-size:1.2rem; padding:4px 10px; border-radius:50%;">✕</button>
+            </div>
+
+            <form id="classroom-modal-form" class="stack" style="gap:14px;">
+                <input type="hidden" name="id" value="${cls?.id || ""}">
+
+                <div class="field">
+                    <label style="font-weight:700; font-size:0.9rem; margin-bottom:6px; display:block;">اسم الفصل <span style="color:var(--danger);">*</span></label>
+                    <input type="text" name="name" id="cls-name-input" required value="${cls?.name || ""}" placeholder="مثال: فصل الزهور، فصل النجوم، كجي وان أ..." style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-family:inherit; font-weight:600;">
+                </div>
+
+                <div class="grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="field">
+                        <label style="font-weight:700; font-size:0.85rem; margin-bottom:6px; display:block;">كود الفصل (رمز مميز)</label>
+                        <input type="text" name="code" id="cls-code-input" value="${cls?.code || ""}" placeholder="اختياري (مثال: KG1_A)" style="width:100%; padding:9px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-family:inherit; direction:ltr; text-align:left;">
+                        <small style="color:var(--ink-soft); font-size:0.75rem;">اتركه فارغاً ليتم توليده تلقائياً</small>
+                    </div>
+
+                    <div class="field">
+                        <label style="font-weight:700; font-size:0.85rem; margin-bottom:6px; display:block;">السعة الاستيعابية</label>
+                        <input type="number" name="capacity" min="1" max="100" value="${cls?.capacity || 20}" style="width:100%; padding:9px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-family:inherit;">
+                        <small style="color:var(--ink-soft); font-size:0.75rem;">الحد الأقصى لعدد الطلاب</small>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label style="font-weight:700; font-size:0.85rem; margin-bottom:6px; display:block;">المعلمة المسؤولة (رائدة الفصل)</label>
+                    <select name="teacher_id" style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg); color:var(--ink); font-family:inherit;">
+                        <option value="">— اختَر المعلمة المسؤولة (اختياري) —</option>
+                        ${(state.staff || []).map((s) => `<option value="${s.id}" ${cls?.teacher_id === s.id ? "selected" : ""}>${s.full_name} (${s.job_title || "معلمة"})</option>`).join("")}
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label style="font-weight:700; font-size:0.85rem; margin-bottom:6px; display:block;">لون تمييز الفصل</label>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="color" name="color" id="cls-color-input" value="${cls?.color || "#3b82f6"}" style="width:50px; height:40px; padding:2px; border:none; border-radius:8px; cursor:pointer;">
+                        <span style="font-size:0.85rem; color:var(--ink-soft);">اختر لوناً يميز هذا الفصل في الجداول والكشوف</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:16px; border-top:1px solid var(--line); padding-top:16px;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('classroom-modal').remove()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" style="font-weight:800; padding:10px 24px; border-radius:10px;">
+                        <span>💾 ${isEdit ? "حفظ التعديلات" : "حفظ وتكويد الفصل"}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const formEl = document.getElementById("classroom-modal-form");
+    formEl.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const fd = new FormData(formEl);
+        const name = (fd.get("name") || "").trim();
+        if (!name) {
+            showToast("يرجى إدخال اسم الفصل أولاً", "error");
+            return;
+        }
+
+        let code = (fd.get("code") || "").trim().toUpperCase().replace(/\s+/g, "_");
+        const teacher_id = fd.get("teacher_id") || "";
+        const capacity = Number(fd.get("capacity")) || 20;
+        const color = fd.get("color") || "#3b82f6";
+        const id = fd.get("id");
+
+        if (!code) {
+            if (isEdit && cls?.code) {
+                code = cls.code;
+            } else {
+                code = `CLASS_${Date.now()}`;
+            }
+        }
+
+        if (!Array.isArray(state.classrooms)) {
+            state.classrooms = [];
+        }
+
+        const duplicate = state.classrooms.find((c) => (c.code === code || c.id === code) && c.id !== id);
+        if (duplicate) {
+            showToast("كود الفصل مستخدم بالفعل لفصل آخر، يرجى كتابة كود مختلف", "error");
+            return;
+        }
+
+        let savedCode = code;
+        if (id) {
+            const idx = state.classrooms.findIndex((c) => c.id === id);
+            if (idx >= 0) {
+                state.classrooms[idx] = {
+                    ...state.classrooms[idx],
+                    name,
+                    code,
+                    teacher_id,
+                    capacity,
+                    color
+                };
+            }
+        } else {
+            const newClass = {
+                id: `class-${Date.now()}`,
+                code,
+                name,
+                teacher_id,
+                capacity,
+                color
+            };
+            state.classrooms.push(newClass);
+            savedCode = code;
+        }
+
+        overlay.remove();
+        saveAndRender();
+
+        const stageSelect = document.querySelector('select[name="stage"]');
+        if (stageSelect) {
+            stageSelect.value = savedCode;
+        }
+
+        showToast(isEdit ? "✅ تم تعديل الفصل بنجاح" : "✅ تم تكويد وإضافة الفصل الجديد بنجاح", "success");
+    });
+}
+
+function deleteClassroom(id) {
+    const cls = (state.classrooms || []).find((c) => c.id === id || c.code === id);
+    if (!cls) return;
+    const code = cls.code || cls.id;
+    const activeKids = (state.children || []).filter((c) => c.stage === code || c.stage === cls.id);
+    if (activeKids.length > 0) {
+        showToast(`لا يمكن حذف الفصل لأن هناك (${activeKids.length}) أطفال مسجلين به حالياً! يرجى نقلهم لفصل آخر أولاً.`, "error");
+        return;
+    }
+    showConfirm(`هل أنت متأكد من حذف فصل (${cls.name})؟`, () => {
+        state.classrooms = state.classrooms.filter((c) => c.id !== id && c.code !== id);
+        saveAndRender();
+        showToast("✅ تم حذف الفصل بنجاح", "success");
+    });
 }
 
 function renderSettingsBackup() {
