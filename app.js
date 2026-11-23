@@ -619,7 +619,7 @@ document.addEventListener("input", (e) => {
 document.addEventListener("pointermove", handleCardPointerMove);
 document.addEventListener("pointerout", handleCardPointerOut);
 
-const CURRENT_APP_VERSION = "5.8.0";
+const CURRENT_APP_VERSION = "5.9.0";
 
 function isNewerVersion(remote, local) {
     if (!remote || !local) return false;
@@ -672,6 +672,21 @@ async function checkStartupUpdateNotification() {
    CUMULATIVE MULTI-VERSION WHAT'S NEW ENGINE
 ═══════════════════════════════════════════════════════════════════════════ */
 const APP_RELEASES_REGISTRY = [
+    {
+        version: "5.9.0",
+        date: "2026-11-23",
+        badge: "💵 الإصدار v5.9.0 (الأحدث)",
+        title: "نظام إدارة وسداد الاشتراكات الشهرية الشامل وإيصالات القبض الفورية",
+        items: [
+            "توليد ومتابعة استحقاق الاشتراكات لجميع الشهور التالية والمتتالية تلقائياً لكل طفل نشط من تاريخ التحاقه وحتى اليوم.",
+            "ربط قيمة الاشتراك الشهري المخصصة لكل طفل تلقائياً بجدول الرسوم والفواتير المستحقة.",
+            "زر مباشر وسريع (💵 تسجيل سداد اشتراك) مع نموذج سداد ذكي يدعم الدفع الكامل أو الجزئي واختيار طريقة الدفع.",
+            "طباعة إيصال استلام نقدية رسمي معتمد فور تسجيل السداد بضغطة زر واحدة.",
+            "سجل تفصيلي لجميع الاشتراكات الشهرية لكل طفل مباشرة داخل ملفه الشخصي مع بيان المتبقي والمسدد وحالة كل شهر.",
+            "زر تحديث وتوليد الشهور المستحقة متاح في بروفايل الطفل وقسم الحسابات والمالية.",
+            "تحديث كشف حساب الطفل التفصيلي لعرض تواريخ الشهور المستحقة بدقة تامة."
+        ]
+    },
     {
         version: "5.8.0",
         date: "2026-11-14",
@@ -1125,7 +1140,11 @@ function autoGenerateFeesIfNeeded() {
     const dueDate = `${normalizedMonth.slice(0, 8)}${dueDay}`;
     let added = 0;
 
+    // Check catchup fees for active children across past and current months
+    generateCatchupFeesForAllActiveChildren(true);
+
     state.children.filter((c) => c.status === "ACTIVE").forEach((child) => {
+        const childFee = Number(child.subscription_fee) > 0 ? Number(child.subscription_fee) : monthlyAmount;
         const hasMonthly = state.fees.find(
             (f) => f.child_id === child.id && f.fee_month === normalizedMonth && (f.fee_type || "MONTHLY") === "MONTHLY"
         );
@@ -1135,7 +1154,7 @@ function autoGenerateFeesIfNeeded() {
                 child_id: child.id,
                 fee_month: normalizedMonth,
                 fee_type: "MONTHLY",
-                amount: monthlyAmount,
+                amount: childFee,
                 discount_amount: 0,
                 paid_amount: 0,
                 due_date: dueDate,
@@ -3433,6 +3452,78 @@ function renderChildProfile(profile) {
                 <div><strong>الحضانات المتقدم لها</strong><span>${profile.child.applied_nurseries || "غير مسجلة"}</span></div>
                 <div><strong>آخر ملاحظة طبية</strong><span>${profile.lastMedical?.case_description || "لا توجد"}</span></div>
             </div>
+
+            <!-- MONTHLY SUBSCRIPTIONS & PAYMENT HISTORY TABLE -->
+            <div style="margin-top:22px; border-top:1px solid var(--line); padding-top:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <h4 style="margin:0; font-size:1.15rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+                            <span>💳</span>
+                            <span>سجل الاشتراكات الشهرية للطفل</span>
+                            <span class="count-badge">${(state.fees || []).filter(f => f.child_id === profile.child.id).length} شهور</span>
+                        </h4>
+                        <small style="color:var(--ink-soft); font-weight:600;">سجل استحقاق اشتراك كل الشهور وحالة الدفع وإيصالات القبض.</small>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" class="btn btn-primary btn-sm" data-action="open-payment-modal" data-id="${profile.child.id}" style="font-weight:700; background:#10b981; border-color:#10b981; color:#fff;">
+                            <span>+ سداد اشتراك</span>
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-sm" data-action="generate-child-fees" data-id="${profile.child.id}" style="border:1px solid var(--line); font-weight:700;" title="توليد وتحديث كل الشهور المستحقة المتتالية لهذا الطفل">
+                            <span>🔄 تحديث الشهور المستحقة</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الشهر</th>
+                                <th>نوع الاشتراك</th>
+                                <th>المبلغ المطلوب</th>
+                                <th>المدفوع</th>
+                                <th>المتبقي</th>
+                                <th>الحالة</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(() => {
+                                const cFees = (state.fees || [])
+                                    .filter(f => f.child_id === profile.child.id)
+                                    .sort((a,b) => b.fee_month.localeCompare(a.fee_month));
+                                if (!cFees.length) {
+                                    return `<tr><td colspan="7" class="empty-state">لا توجد سجلات اشتراك مسجلة لهذا الطفل حتى الآن. اضغط "تحديث الشهور المستحقة" بالأعلى لتوليدها فوراً.</td></tr>`;
+                                }
+                                return cFees.map(f => {
+                                    const rem = remainingFeeAmount(f);
+                                    const isPaid = f.status === "PAID" || rem === 0;
+                                    return `
+                                        <tr>
+                                            <td><strong>${formatArabicDate(monthStartDate(f.fee_month))}</strong></td>
+                                            <td><span class="tag ${(f.fee_type || 'MONTHLY') === 'BUS' ? 'tag-bus' : ''}">${FEE_TYPE_LABELS[f.fee_type || 'MONTHLY'] || 'شهري'}</span></td>
+                                            <td>${formatCurrency(f.amount)}</td>
+                                            <td style="color:#10b981; font-weight:700;">${formatCurrency(f.paid_amount)}</td>
+                                            <td style="color:${rem > 0 ? '#ef4444' : '#10b981'}; font-weight:700;">${formatCurrency(rem)}</td>
+                                            <td><span class="tag ${statusClass(f.status)}">${FEE_STATUS_LABELS[f.status]}</span></td>
+                                            <td>
+                                                <div class="row-actions">
+                                                    ${!isPaid ? `
+                                                        <button type="button" class="btn-sm" data-action="quick-pay-fee" data-id="${f.id}" style="background:#10b981; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-weight:700; cursor:pointer;">💵 سداد</button>
+                                                    ` : `
+                                                        <button type="button" class="btn-sm" data-action="print-fee-receipt" data-id="${f.id}" style="background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:4px 8px; border-radius:6px; font-weight:700; cursor:pointer;">🖨️ إيصال</button>
+                                                    `}
+                                                    <button type="button" class="btn-wa-row" data-action="wa-fee-reminder" data-id="${f.id}" title="إرسال تذكير للأهل عبر واتساب">واتساب</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join("");
+                            })()}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -3680,7 +3771,9 @@ function renderFinanceSection() {
                 <div class="field"><label>الشهر</label>
                     <input type="date" name="financeMonth" data-ui-field="financeMonth" value="${ui.financeMonth}">
                 </div>
-                <button class="btn btn-primary" type="button" data-action="generate-monthly-fees" style="align-self:flex-end;">إنشاء رسوم الشهر</button>
+                <button class="btn btn-primary" type="button" data-action="open-payment-modal" style="align-self:flex-end; background:#10b981; border-color:#10b981; font-weight:800;">💵 تسجيل سداد اشتراك</button>
+                <button class="btn btn-secondary" type="button" data-action="generate-monthly-fees" style="align-self:flex-end;">إنشاء رسوم الشهر</button>
+                <button class="btn btn-ghost" type="button" data-action="generate-all-catchup-fees" style="align-self:flex-end; border:1px solid var(--line); font-weight:700;" title="توليد وتحديث اشتراكات كل الشهور السابقة والتالية لجميع الأطفال النشطين">🔄 توليد كل الشهور المستحقة</button>
             </div>
         </div>
 
@@ -3816,6 +3909,11 @@ function renderFinanceSection() {
                                     <td><span class="tag ${statusClass(fee.status)}">${FEE_STATUS_LABELS[fee.status]}</span></td>
                                     <td>
                                         <div class="row-actions">
+                                            ${remainingFeeAmount(fee) > 0 ? `
+                                                <button type="button" class="btn-sm" data-action="quick-pay-fee" data-id="${fee.id}" style="background:#10b981; color:#fff; border:none; padding:4px 9px; border-radius:6px; font-weight:700; cursor:pointer;" title="تسجيل سداد هذا الاشتراك">💵 سداد</button>
+                                            ` : `
+                                                <button type="button" class="btn-sm" data-action="print-fee-receipt" data-id="${fee.id}" style="background:var(--bg); border:1px solid var(--line); color:var(--ink); padding:4px 8px; border-radius:6px; font-weight:700; cursor:pointer;" title="طباعة إيصال استلام النقدية">🖨️ إيصال</button>
+                                            `}
                                             <button type="button" data-action="edit-fee" data-id="${fee.id}">تعديل</button>
                                             <button type="button" class="btn-wa-row" data-action="wa-fee-reminder" data-id="${fee.id}" title="إرسال تذكير للأهل عبر واتساب">واتساب</button>
                                             <button type="button" data-action="delete-fee" data-id="${fee.id}">حذف</button>
@@ -7119,6 +7217,30 @@ function handleClick(event) {
         case "generate-monthly-fees":
             generateMonthlyFees(ui.financeMonth);
             return;
+        case "open-payment-modal":
+            showPaymentModal(id);
+            return;
+        case "quick-pay-fee":
+            showPaymentModal(null, id);
+            return;
+        case "print-fee-receipt": {
+            const f = (state.fees || []).find((x) => x.id === id);
+            if (f) printPaymentReceipt(f.id, f.paid_amount || f.amount, "نقدي");
+            return;
+        }
+        case "generate-child-fees": {
+            const addedCount = generateCatchupFeesForChild(id);
+            saveAndRender();
+            if (addedCount > 0) {
+                showToast(`تم توليد ${addedCount} استحقاق شهري مستحق لهذا الطفل بنجاح.`);
+            } else {
+                showToast("سجلات اشتراك الطفل محدثة لجميع الشهور حتى الآن.", "info");
+            }
+            return;
+        }
+        case "generate-all-catchup-fees":
+            generateCatchupFeesForAllActiveChildren();
+            return;
         case "new-expense":
             ui.expenseFormId = "";
             render();
@@ -9041,6 +9163,11 @@ function saveChild(data) {
         }
     }
 
+    // Auto catch up / generate monthly fees for child if active and has subscription fee
+    if (childPayload.status === "ACTIVE" && childPayload.subscription_fee > 0) {
+        generateCatchupFeesForChild(childId);
+    }
+
     ui.childFormId = "";
     ui.selectedChildId = childId;
     ui.childSearch = "";
@@ -9486,6 +9613,7 @@ function generateMonthlyFees(month) {
     let added = 0;
 
     state.children.filter((child) => child.status === "ACTIVE").forEach((child) => {
+        const childFee = Number(child.subscription_fee) > 0 ? Number(child.subscription_fee) : monthlyAmount;
         const existsMonthly = state.fees.find(
             (fee) => fee.child_id === child.id && fee.fee_month === normalizedMonth && (fee.fee_type || "MONTHLY") === "MONTHLY"
         );
@@ -9495,7 +9623,7 @@ function generateMonthlyFees(month) {
                 child_id: child.id,
                 fee_month: normalizedMonth,
                 fee_type: "MONTHLY",
-                amount: monthlyAmount,
+                amount: childFee,
                 discount_amount: 0,
                 paid_amount: 0,
                 due_date: dueDate,
@@ -10923,7 +11051,7 @@ function printChildStatement(childId) {
                 <tbody>
                     ${childFees.length ? childFees.map(f => `
                         <tr>
-                            <td>${f.month || "-"}</td>
+                            <td>${f.fee_month ? formatArabicDate(monthStartDate(f.fee_month)) : "-"}</td>
                             <td>${formatCurrency(f.amount || subFee)}</td>
                             <td>${formatCurrency(f.paid_amount || 0)}</td>
                             <td>${f.payment_date ? formatArabicDate(f.payment_date) : "-"}</td>
@@ -10944,6 +11072,452 @@ function printChildStatement(childId) {
             <div style="margin-top:40px; display:flex; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:20px;">
                 <div>توقيع المحاسب / الإدارة: ....................</div>
                 <div>ختم الأكاديمية: ....................</div>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MONTHLY SUBSCRIPTION ENGINE, RECURRENT CATCHUP & PAYMENT RECEIPT
+═══════════════════════════════════════════════════════════════════════════ */
+
+function recalculateChildBalance(childId) {
+    const child = getChildById(childId);
+    if (!child) return;
+    const unpaid = (state.fees || [])
+        .filter((f) => f.child_id === childId && (f.fee_type || "MONTHLY") === "MONTHLY")
+        .reduce((sum, f) => sum + remainingFeeAmount(f), 0);
+    child.remaining_balance = Math.max(0, unpaid);
+}
+
+function generateCatchupFeesForChild(childId, silent = false) {
+    const child = getChildById(childId);
+    if (!child) return 0;
+    const settings = state.feeSettings || {};
+    const monthlyAmount = Number(child.subscription_fee) > 0 ? Number(child.subscription_fee) : (Number(settings.monthly_amount) || 1800);
+    const dueDay = String(Number(settings.due_day) || 10).padStart(2, "0");
+
+    let startDateStr = child.first_attendance_date || child.enrollment_date;
+    if (!startDateStr) {
+        const now = new Date();
+        startDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    }
+
+    const start = new Date(startDateStr);
+    let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+    const end = new Date();
+    const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+    const maxPast = new Date(end.getFullYear(), end.getMonth() - 24, 1);
+    if (cur < maxPast) cur = maxPast;
+
+    let added = 0;
+    while (cur <= endMonth) {
+        const mStr = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-01`;
+        const dueDate = `${mStr.slice(0, 8)}${dueDay}`;
+
+        const existsMonthly = (state.fees || []).find(
+            (fee) => fee.child_id === child.id && fee.fee_month === mStr && (fee.fee_type || "MONTHLY") === "MONTHLY"
+        );
+        if (!existsMonthly && monthlyAmount > 0) {
+            const isStartMonth = mStr === normalizeMonthStart(startDateStr);
+            let initialPaid = 0;
+            if (isStartMonth && child.remaining_balance !== undefined) {
+                initialPaid = Math.max(0, monthlyAmount - Number(child.remaining_balance));
+            }
+            const isFull = initialPaid >= monthlyAmount;
+
+            state.fees.push({
+                id: createId("fee"),
+                child_id: child.id,
+                fee_month: mStr,
+                fee_type: "MONTHLY",
+                amount: monthlyAmount,
+                discount_amount: 0,
+                paid_amount: initialPaid,
+                due_date: dueDate,
+                payment_date: initialPaid > 0 ? (child.first_attendance_date || todayDate()) : "",
+                status: isFull ? "PAID" : (initialPaid > 0 ? "PARTIAL" : "PENDING"),
+                notes: isStartMonth ? "تسجيل اشتراك عند التحاق الطفل" : ""
+            });
+            added++;
+        }
+
+        if (child.bus_subscription && Number(child.bus_monthly_fee) > 0) {
+            const existsBus = (state.fees || []).find(
+                (fee) => fee.child_id === child.id && fee.fee_month === mStr && fee.fee_type === "BUS"
+            );
+            if (!existsBus) {
+                state.fees.push({
+                    id: createId("fee"),
+                    child_id: child.id,
+                    fee_month: mStr,
+                    fee_type: "BUS",
+                    amount: Number(child.bus_monthly_fee),
+                    discount_amount: 0,
+                    paid_amount: 0,
+                    due_date: dueDate,
+                    payment_date: "",
+                    status: "PENDING",
+                    notes: `خط السير: ${child.bus_route || "غير محدد"}`
+                });
+                added++;
+            }
+        }
+
+        cur.setMonth(cur.getMonth() + 1);
+    }
+
+    recalculateChildBalance(child.id);
+    return added;
+}
+
+function generateCatchupFeesForAllActiveChildren(silent = false) {
+    let totalAdded = 0;
+    const activeChildren = (state.children || []).filter((c) => c.status === "ACTIVE");
+    activeChildren.forEach((child) => {
+        totalAdded += generateCatchupFeesForChild(child.id, true);
+    });
+    if (!silent) {
+        saveAndRender();
+        showToast(`تم فحص وتحديث اشتراكات ${activeChildren.length} طفل نشط (تمت إضافة ${totalAdded} استحقاق شهري جديد).`);
+    }
+    return totalAdded;
+}
+
+function showPaymentModal(childId, feeId) {
+    let selectedFee = feeId ? (state.fees || []).find((f) => f.id === feeId) : null;
+    let selectedChildId = childId || selectedFee?.child_id || (state.children.find((c) => c.status === "ACTIVE")?.id || "");
+    let child = getChildById(selectedChildId);
+
+    document.getElementById("payment-modal")?.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "payment-modal";
+    overlay.className = "modal-overlay modal-visible";
+    overlay.style.zIndex = "99999";
+
+    function getChildPendingFees(cId) {
+        return (state.fees || [])
+            .filter((f) => f.child_id === cId)
+            .sort((a, b) => b.fee_month.localeCompare(a.fee_month));
+    }
+
+    function renderModalContent() {
+        child = getChildById(selectedChildId);
+        const childFees = selectedChildId ? getChildPendingFees(selectedChildId) : [];
+        if (!selectedFee && childFees.length) {
+            selectedFee = childFees.find((f) => remainingFeeAmount(f) > 0) || childFees[0];
+        }
+
+        const totalAmount = selectedFee ? Number(selectedFee.amount) || 0 : (child ? (Number(child.subscription_fee) || 0) : 0);
+        const paidAmount = selectedFee ? Number(selectedFee.paid_amount) || 0 : 0;
+        const remaining = selectedFee ? remainingFeeAmount(selectedFee) : totalAmount;
+        const currentMonth = currentMonthDate();
+
+        overlay.innerHTML = `
+            <div class="modal-box" style="max-width:560px; width:92%; text-align:right; border-radius:22px; padding:26px; background:var(--paper); color:var(--ink); border:1px solid var(--line); box-shadow:var(--shadow-lg);">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:1.6rem; color:#10b981;">💵</span>
+                        <div>
+                            <h3 style="margin:0; font-size:1.2rem; font-weight:800;">تسجيل سداد اشتراك شهري</h3>
+                            <small style="color:var(--ink-soft); font-weight:600;">سداد كامل أو جزئي مع إمكانية طباعة إيصال استلام فوري</small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="close-payment-modal-btn" style="font-size:1.2rem; font-weight:bold; cursor:pointer;">✕</button>
+                </div>
+
+                <form id="payment-modal-form" class="stack" style="gap:14px;">
+                    <div class="field">
+                        <label style="font-weight:700;">اسم الطفل</label>
+                        <select id="pay-child-select" class="input" style="width:100%; padding:9px 12px; font-weight:700; border-radius:10px;">
+                            ${state.children.filter((c) => c.status === "ACTIVE").map((c) => `
+                                <option value="${c.id}" ${c.id === selectedChildId ? "selected" : ""}>${c.full_name} (${STAGE_LABELS[c.stage] || c.stage})</option>
+                            `).join("")}
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label style="font-weight:700;">الشهر المستحق للسداد</label>
+                        <select id="pay-fee-select" class="input" style="width:100%; padding:9px 12px; font-weight:700; border-radius:10px;">
+                            ${childFees.map((f) => {
+                                const rem = remainingFeeAmount(f);
+                                const isPaid = f.status === "PAID" || rem === 0;
+                                const monthName = formatArabicDate(monthStartDate(f.fee_month));
+                                return `
+                                    <option value="${f.id}" ${selectedFee && f.id === selectedFee.id ? "selected" : ""}>
+                                        ${monthName} - ${FEE_TYPE_LABELS[f.fee_type || 'MONTHLY'] || 'اشتراك شهري'} [${isPaid ? 'مسدد بالكامل' : `متبقي: ${formatCurrency(rem)}`}]
+                                    </option>
+                                `;
+                            }).join("")}
+                            ${!childFees.length ? `<option value="NEW_CURRENT">اشتراك الشهر الحالي (${formatArabicDate(monthStartDate(currentMonth))})</option>` : ""}
+                        </select>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; background:var(--bg); padding:12px; border-radius:12px; border:1px solid var(--line); text-align:center;">
+                        <div>
+                            <small style="color:var(--ink-soft); font-weight:700; display:block;">قيمة الاشتراك</small>
+                            <span style="font-size:1.1rem; font-weight:800; color:var(--ink);">${formatCurrency(totalAmount)}</span>
+                        </div>
+                        <div>
+                            <small style="color:var(--ink-soft); font-weight:700; display:block;">المسدد سابقاً</small>
+                            <span style="font-size:1.1rem; font-weight:800; color:#10b981;">${formatCurrency(paidAmount)}</span>
+                        </div>
+                        <div>
+                            <small style="color:var(--ink-soft); font-weight:700; display:block;">المتبقي للدفع</small>
+                            <span style="font-size:1.1rem; font-weight:800; color:${remaining > 0 ? '#ef4444' : '#10b981'};">${formatCurrency(remaining)}</span>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+                        <div class="field">
+                            <label style="font-weight:800; color:#10b981;">المبلغ المدفوع الآن (جنيه) *</label>
+                            <input id="pay-now-amount" type="number" step="1" min="1" max="100000" required value="${remaining > 0 ? remaining : totalAmount}" style="font-size:1.2rem; font-weight:900; color:#10b981; border:2px solid #10b981; border-radius:10px; padding:8px 12px;">
+                        </div>
+                        <div class="field">
+                            <label style="font-weight:700;">طريقة السداد</label>
+                            <select id="pay-method-select" class="input" style="padding:9px 10px; font-weight:700; border-radius:10px;">
+                                <option value="نقدي (كاش)" selected>نقدي (كاش)</option>
+                                <option value="فودافون كاش">فودافون كاش</option>
+                                <option value="إنستاباي (InstaPay)">إنستاباي (InstaPay)</option>
+                                <option value="تحويل بنكي">تحويل بنكي</option>
+                                <option value="أخرى">أخرى</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="field">
+                            <label style="font-weight:700;">تاريخ السداد</label>
+                            <input id="pay-date-input" type="date" value="${todayDate()}" required style="padding:8px 10px; border-radius:10px;">
+                        </div>
+                        <div class="field">
+                            <label style="font-weight:700;">ملاحظات السداد</label>
+                            <input id="pay-notes-input" type="text" placeholder="مثلاً: دفعة أولى / تحويل" style="padding:8px 10px; border-radius:10px;">
+                        </div>
+                    </div>
+
+                    <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:10px; margin-top:4px;">
+                        <input type="checkbox" id="pay-print-receipt-check" checked style="width:18px; height:18px; cursor:pointer;">
+                        <label for="pay-print-receipt-check" style="cursor:pointer; font-weight:700; color:#065f46; margin:0;">
+                            🖨️ فتح إيصال استلام نقدية للطباعة فور حفظ السداد
+                        </label>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                        <button type="button" class="btn btn-ghost" id="cancel-payment-btn" style="border:1px solid var(--line); font-weight:700;">إلغاء</button>
+                        <button type="submit" class="btn btn-primary" style="background:#10b981; border-color:#10b981; font-weight:800; padding:10px 24px; font-size:1.05rem;">✓ تأكيد وتسجيل السداد</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        overlay.querySelector("#close-payment-modal-btn").onclick = () => overlay.remove();
+        overlay.querySelector("#cancel-payment-btn").onclick = () => overlay.remove();
+
+        const childSelect = overlay.querySelector("#pay-child-select");
+        childSelect.onchange = () => {
+            selectedChildId = childSelect.value;
+            selectedFee = null;
+            renderModalContent();
+        };
+
+        const feeSelect = overlay.querySelector("#pay-fee-select");
+        feeSelect.onchange = () => {
+            const fVal = feeSelect.value;
+            if (fVal && fVal !== "NEW_CURRENT") {
+                selectedFee = state.fees.find((f) => f.id === fVal);
+            } else {
+                selectedFee = null;
+            }
+            renderModalContent();
+        };
+
+        const form = overlay.querySelector("#payment-modal-form");
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const paidNow = Number(overlay.querySelector("#pay-now-amount").value) || 0;
+            const payMethod = overlay.querySelector("#pay-method-select").value;
+            const payDate = overlay.querySelector("#pay-date-input").value || todayDate();
+            const payNotes = overlay.querySelector("#pay-notes-input").value.trim();
+            const shouldPrint = overlay.querySelector("#pay-print-receipt-check").checked;
+
+            if (paidNow <= 0) {
+                showToast("برجاء إدخال مبلغ سداد صحيح أكبر من الصفر.", "error");
+                return;
+            }
+
+            let feeToUpdate = selectedFee;
+            if (!feeToUpdate) {
+                const normalizedMonth = normalizeMonthStart(payDate);
+                const settings = state.feeSettings || {};
+                const feeAmt = Number(child?.subscription_fee) > 0 ? Number(child.subscription_fee) : (Number(settings.monthly_amount) || 1800);
+                feeToUpdate = {
+                    id: createId("fee"),
+                    child_id: selectedChildId,
+                    fee_month: normalizedMonth,
+                    fee_type: "MONTHLY",
+                    amount: feeAmt,
+                    discount_amount: 0,
+                    paid_amount: 0,
+                    due_date: `${normalizedMonth.slice(0, 8)}10`,
+                    payment_date: "",
+                    status: "PENDING",
+                    notes: ""
+                };
+                state.fees.push(feeToUpdate);
+            }
+
+            feeToUpdate.paid_amount = (Number(feeToUpdate.paid_amount) || 0) + paidNow;
+            feeToUpdate.payment_date = payDate;
+            const rem = remainingFeeAmount(feeToUpdate);
+            if (rem <= 0) {
+                feeToUpdate.status = "PAID";
+            } else {
+                feeToUpdate.status = "PARTIAL";
+            }
+            if (payNotes || payMethod) {
+                const noteEntry = `[${payDate}] سداد: ${paidNow} ج (${payMethod})${payNotes ? ' - ' + payNotes : ''}`;
+                feeToUpdate.notes = feeToUpdate.notes ? `${feeToUpdate.notes}
+${noteEntry}` : noteEntry;
+            }
+
+            recalculateChildBalance(selectedChildId);
+
+            overlay.remove();
+            saveAndRender();
+
+            showToast(`تم تسجيل سداد مبلغ ${formatCurrency(paidNow)} للطفل "${child?.full_name || ''}" بنجاح.`);
+
+            if (shouldPrint) {
+                printPaymentReceipt(feeToUpdate.id, paidNow, payMethod);
+            }
+        };
+    }
+
+    renderModalContent();
+    document.body.appendChild(overlay);
+}
+
+function printPaymentReceipt(feeId, paidNow, paymentMethod = "نقدي") {
+    const fee = (state.fees || []).find((f) => f.id === feeId);
+    if (!fee) return;
+    const child = getChildById(fee.child_id);
+    if (!child) return;
+
+    const parentPhone = getChildWhatsappPhone(child.id);
+    const stage = STAGE_LABELS[child.stage] || child.stage;
+    const rem = remainingFeeAmount(fee);
+    const receiptNum = `REC-${(fee.id || "").slice(-5).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+    const monthName = formatArabicDate(monthStartDate(fee.fee_month));
+
+    const printWin = window.open('', '_blank', 'width=800,height=720');
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>إيصال استلام نقدية | ${child.full_name}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+            <style>
+                * { box-sizing: border-box; }
+                body { font-family: 'Cairo', sans-serif; padding: 24px; color: #0f172a; margin: 0; background: #fff; }
+                .receipt-container { max-width: 650px; margin: 0 auto; border: 2px solid #0f172a; border-radius: 14px; padding: 24px; position: relative; }
+                .receipt-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 14px; margin-bottom: 18px; }
+                .receipt-badge { background: #ecfdf5; color: #065f46; border: 1px solid #10b981; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.9rem; }
+                .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 18px; font-size: 0.95rem; }
+                .info-item { display: flex; justify-content: space-between; }
+                .info-item strong { color: #475569; }
+                .payment-box { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px dashed #10b981; border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 18px; }
+                .payment-box .amount { font-size: 2.2rem; font-weight: 900; color: #065f46; margin: 4px 0; }
+                .details-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.95rem; }
+                .details-table th, .details-table td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: right; }
+                .details-table th { background: #f1f5f9; font-weight: 800; }
+                .receipt-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; border-top: 1px dashed #94a3b8; padding-top: 16px; }
+                .signature-box { text-align: center; width: 45%; }
+                .signature-line { border-bottom: 1px solid #64748b; height: 35px; margin-top: 8px; }
+                @media print {
+                    .no-print { display: none !important; }
+                    body { padding: 0; }
+                    .receipt-container { border: 1.5px solid #000; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print" style="margin-bottom:18px; display:flex; justify-content:center; gap:12px;">
+                <button onclick="window.print()" style="padding:10px 28px; background:#10b981; color:#fff; font-weight:800; font-family:'Cairo'; font-size:1rem; border:none; border-radius:8px; cursor:pointer;">🖨️ طباعة الإيصال الآن</button>
+                <button onclick="window.close()" style="padding:10px 20px; background:#f1f5f9; color:#475569; font-weight:700; font-family:'Cairo'; font-size:1rem; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer;">إغلاق</button>
+            </div>
+
+            <div class="receipt-container">
+                <div class="receipt-header">
+                    <div>
+                        <h2 style="margin:0; font-size:1.3rem; font-weight:900; color:#0f172a;">${BRAND.name}</h2>
+                        <small style="color:#64748b; font-weight:700;">روضة براعم الإيمان النموذجية للغات والتأسيس</small>
+                    </div>
+                    <div style="text-align:left;">
+                        <span class="receipt-badge">إيصال استلام نقدية</span>
+                        <div style="font-size:0.8rem; color:#64748b; margin-top:4px; font-weight:700;">رقم: ${receiptNum}</div>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item"><strong>اسم الطفل:</strong> <span style="font-weight:800;">${child.full_name}</span></div>
+                    <div class="info-item"><strong>المرحلة / الفصل:</strong> <span>${stage}</span></div>
+                    <div class="info-item"><strong>ولي الأمر / الهاتف:</strong> <span>${parentPhone || "-"}</span></div>
+                    <div class="info-item"><strong>تاريخ السداد:</strong> <span>${formatArabicDate(fee.payment_date || todayDate())}</span></div>
+                </div>
+
+                <div class="payment-box">
+                    <small style="font-weight:800; color:#047857;">المبلغ المستلم الآن</small>
+                    <div class="amount">${formatCurrency(paidNow || fee.paid_amount)}</div>
+                    <small style="font-weight:700; color:#065f46;">طريقة الدفع: ${paymentMethod}</small>
+                </div>
+
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th>البيان</th>
+                            <th>عن شهر</th>
+                            <th>المبلغ المطلوب</th>
+                            <th>إجمالي المسدد</th>
+                            <th>المتبقي بعد السداد</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>${FEE_TYPE_LABELS[fee.fee_type || 'MONTHLY'] || 'اشتراك شهري'}</strong></td>
+                            <td>${monthName}</td>
+                            <td>${formatCurrency(fee.amount)}</td>
+                            <td style="color:#10b981; font-weight:800;">${formatCurrency(fee.paid_amount)}</td>
+                            <td style="color:${rem > 0 ? '#dc2626' : '#10b981'}; font-weight:800;">${rem > 0 ? formatCurrency(rem) : 'خالص ✓'}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                ${fee.notes ? `
+                    <div style="font-size:0.85rem; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 12px; margin-bottom:16px;">
+                        <strong>ملاحظات:</strong> ${fee.notes.replace(/\n/g, ' · ')}
+                    </div>
+                ` : ''}
+
+                <div class="receipt-footer">
+                    <div class="signature-box">
+                        <strong style="font-size:0.9rem;">توقيع المستلم / المحاسب</strong>
+                        <div class="signature-line"></div>
+                    </div>
+                    <div class="signature-box">
+                        <strong style="font-size:0.9rem;">ختم الإدارة المعتمد</strong>
+                        <div class="signature-line"></div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-top:14px; font-size:0.75rem; color:#94a3b8; font-weight:600;">
+                    هذا الإيصال مستخرج إلكترونياً من نظام ${BRAND.name} ومسجل بالحسابات المالية.
+                </div>
+            </div>
         </body>
         </html>
     `);
